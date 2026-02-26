@@ -10,6 +10,7 @@
     "dev": "node apps/companion/src/index.js",
     "test": "node --test",
     "build": "node scripts/build-check.js",
-    "install:guided": "sh scripts/install.sh"
+    "install:guided": "sh scripts/install.sh",
+    "uninstall:guided": "sh scripts/uninstall.sh"
   }
 }

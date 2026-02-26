@@ -92,6 +92,14 @@ npm test
 npm run build
 ```
 
+## Uninstall
+- Full guide: [docs/UNINSTALL.md](/Users/isauerzapf/Development/emailbuddy/docs/UNINSTALL.md)
+- Guided script:
+```bash
+npm run uninstall:guided
+```
+- Note: Chrome extension removal is manual (`chrome://extensions`).
+
 ## Optional: Auto-start Companion at Login
 1. Copy and edit [docs/com.emailbuddy.companion.plist](/Users/isauerzapf/Development/emailbuddy/docs/com.emailbuddy.companion.plist) (replace `USERNAME` path).
 2. Install it:
