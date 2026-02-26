@@ -3,3 +3,11 @@ node_modules/
 npm-debug.log*
 coverage/
 .tmp/
+.env
+.env.*
+!.env.example
+dist/
+build/
+*.log
+.idea/
+.vscode/
