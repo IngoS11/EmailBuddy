@@ -7,7 +7,26 @@ EmailBuddy is a macOS-focused toolchain for beautifying Gmail draft text in your
 - `apps/companion`: Local HTTP service (`127.0.0.1:48123`) that rewrites text with Ollama-first + cloud fallback.
 - `packages/shared`: Style/profile parsing and common helpers.
 
+## Requirements
+### Minimum
+- macOS 13+ (Ventura or newer)
+- Node.js 20+ and npm
+- Chrome/Chromium (for extension workflow)
+- Internet connection for cloud providers and first-time model download
+
+### Recommended
+- Apple Silicon Mac (M1/M2/M3) with 16 GB RAM or more
+- Ollama installed with local model (`llama3.1:8b` by default)
+- OpenAI and/or Anthropic API key for cloud fallback
+- Stable internet for initial setup and model pulls
+
 ## Quick Start
+0. Guided setup (recommended):
+```bash
+npm run install:guided
+```
+This installer checks whether Ollama is installed and asks for approval before installing it.
+
 1. Start the companion service:
 ```bash
 npm run dev
@@ -46,6 +65,7 @@ Markdown rules override learned profile traits.
 
 ## API
 - `POST /v1/rewrite`
+- `GET /v1/system/checks`
 - `POST /v1/profile/samples`
 - `GET/PUT /v1/config`
 - `GET /v1/config/schema`

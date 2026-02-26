@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { getConfigSchema, loadConfig, loadStyleMarkdown, saveConfig, saveStyleMarkdown } from './config.js';
 import { getSecret, setSecret } from './keychain.js';
 import { buildProfile, rewriteEmail } from './rewrite.js';
+import { getSystemChecks } from './system-checks.js';
 
 function json(res, code, body) {
   res.writeHead(code, {
@@ -85,6 +86,17 @@ async function handler(req, res) {
 
     if (req.method === 'GET' && url.pathname === '/v1/health') {
       json(res, 200, { ok: true });
+      log('info', 'http.request.end', {
+        requestId,
+        status: 200,
+        durationMs: Date.now() - startedAt
+      });
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/v1/system/checks') {
+      const checks = await getSystemChecks();
+      json(res, 200, checks);
       log('info', 'http.request.end', {
         requestId,
         status: 200,
