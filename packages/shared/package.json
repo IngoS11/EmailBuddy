@@ -1,0 +1,10 @@
+{
+  "name": "@emailbuddy/shared",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./style-parser": "./src/style-parser.js",
+    "./profile": "./src/profile.js",
+    "./types": "./src/types.js"
+  }
+}

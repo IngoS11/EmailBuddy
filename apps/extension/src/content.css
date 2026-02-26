@@ -1,0 +1,19 @@
+.emailbuddy-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  max-width: 420px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #9bb3d9;
+  background: #e8f0fe;
+  color: #1f1f1f;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.emailbuddy-toast.error {
+  border-color: #d19ca3;
+  background: #fce8e6;
+}

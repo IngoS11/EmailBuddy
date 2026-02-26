@@ -1,0 +1,9 @@
+{
+  "name": "@emailbuddy/companion",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@emailbuddy/shared": "0.1.0"
+  }
+}

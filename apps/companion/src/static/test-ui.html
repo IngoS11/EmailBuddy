@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EmailBuddy Companion</title>
+    <style>
+      :root {
+        --bg: #f6f1e9;
+        --bg-soft: #efe7dc;
+        --card: #fffdf8;
+        --ink: #2e241b;
+        --muted: #705f51;
+        --line: #d8c8b8;
+        --accent: #2f6f8f;
+        --accent-2: #4f8f66;
+        --danger: #a33a2f;
+        --ok: #2f7b3f;
+        --radius: 14px;
+        --shadow: 0 10px 30px rgba(38, 23, 6, 0.08);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--bg);
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
+      }
+
+      .shell {
+        max-width: 1320px;
+        margin: 28px auto;
+        padding: 0 16px 24px;
+      }
+
+      h1, h2, h3 {
+        font-family: "Iowan Old Style", "Palatino Linotype", serif;
+        margin: 0;
+      }
+
+      h1 { font-size: 2rem; letter-spacing: 0.01em; }
+      p { margin: 0; }
+
+      .hero {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .hero p { color: var(--muted); }
+
+      .tabs {
+        display: inline-flex;
+        gap: 6px;
+        padding: 6px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--bg-soft);
+        margin: 14px 0 18px;
+      }
+
+      .tab {
+        border: 0;
+        border-radius: 999px;
+        padding: 9px 14px;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .tab[aria-selected="true"] {
+        background: #fff;
+        color: var(--ink);
+        box-shadow: 0 3px 10px rgba(58, 42, 27, 0.13);
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--card);
+        box-shadow: var(--shadow);
+        padding: 16px;
+        display: grid;
+        gap: 14px;
+        animation: panel-in 180ms ease;
+      }
+
+      @keyframes panel-in {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      [role="tabpanel"][hidden] { display: none; }
+
+      .grid-two {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      label { font-weight: 700; font-size: 0.92rem; }
+
+      textarea,
+      input,
+      select,
+      button {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 9px 11px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+      }
+
+      textarea {
+        min-height: 240px;
+        resize: vertical;
+        font-family: "Menlo", "Consolas", monospace;
+        font-size: 13px;
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+        flex: 1 1 240px;
+        min-width: 220px;
+      }
+
+      .field > label {
+        margin: 0;
+      }
+
+      button {
+        cursor: pointer;
+        font-weight: 700;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 12px rgba(38, 23, 6, 0.14);
+      }
+
+      .primary { background: var(--accent); color: #fff; border-color: transparent; }
+      .secondary { background: #f6efe4; }
+
+      .status {
+        min-height: 20px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .status.ok { color: var(--ok); }
+      .status.error { color: var(--danger); }
+
+      .providers {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 8px;
+      }
+
+      .provider-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px 10px;
+        background: #fff;
+      }
+
+      .provider-item.dragging {
+        opacity: 0.7;
+        box-shadow: 0 8px 18px rgba(38, 23, 6, 0.18);
+      }
+
+      .provider-item.drop-target {
+        outline: 2px dashed var(--accent);
+        outline-offset: 2px;
+      }
+
+      .drag-handle {
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        cursor: grab;
+        user-select: none;
+      }
+
+      .provider-label { font-weight: 700; min-width: 120px; }
+
+      .provider-actions {
+        display: flex;
+        gap: 6px;
+        margin-left: auto;
+      }
+
+      .provider-actions button {
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+
+      .hint { color: var(--muted); font-size: 0.88rem; }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+      }
+
+      input[type="checkbox"] {
+        width: auto;
+      }
+
+      @media (max-width: 760px) {
+        .shell { padding: 0 12px 20px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <h1>EmailBuddy Companion</h1>
+        <p>Rewrite and settings share one modern interface. Companion config remains source of truth.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Companion panels">
+        <button id="tab-rewrite" class="tab" role="tab" aria-controls="panel-rewrite" aria-selected="true" tabindex="0">Test</button>
+        <button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Settings</button>
+        <button id="tab-style" class="tab" role="tab" aria-controls="panel-style" aria-selected="false" tabindex="-1">Style</button>
+      </div>
+
+      <section id="panel-rewrite" class="panel" role="tabpanel" aria-labelledby="tab-rewrite">
+        <div class="row">
+          <div class="field">
+            <label for="mode">Mode</label>
+            <select id="mode">
+              <option value="casual">casual</option>
+              <option value="polished">polished</option>
+              <option value="concise">concise</option>
+              <option value="custom">custom</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="custom-mode">Custom mode</label>
+            <input id="custom-mode" placeholder="custom mode" style="display:none;" />
+          </div>
+          <button id="rewrite" class="primary" type="button">Rewrite</button>
+        </div>
+
+        <div class="grid-two">
+          <div>
+            <label for="input">Input</label>
+            <textarea id="input" placeholder="Paste or write a draft..."></textarea>
+          </div>
+          <div>
+            <label for="output">Output</label>
+            <textarea id="output" readonly></textarea>
+          </div>
+        </div>
+
+        <p id="rewrite-status" class="status"></p>
+      </section>
+
+      <section id="panel-settings" class="panel" role="tabpanel" aria-labelledby="tab-settings" hidden>
+        <p class="hint">Drag providers to reorder. Click Save to persist.</p>
+
+        <h3>Provider Order</h3>
+        <ul id="provider-order" class="providers"></ul>
+
+        <h3>Runtime</h3>
+        <div class="row">
+          <div class="field">
+            <label for="timeout-ms">Timeout (ms)</label>
+            <input id="timeout-ms" type="number" min="1000" max="60000" step="100" />
+          </div>
+          <div class="field">
+            <label for="history-enabled">History</label>
+            <label><input id="history-enabled" type="checkbox" /> Enable history logging</label>
+          </div>
+          <button id="save-config" class="primary" type="button">Save config</button>
+        </div>
+
+        <h3>API Keys</h3>
+        <div class="row">
+          <div class="field">
+            <label for="openai-key">OpenAI</label>
+            <input id="openai-key" type="password" placeholder="sk-..." />
+          </div>
+          <button id="save-openai" class="secondary" type="button">Save OpenAI key</button>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="anthropic-key">Anthropic</label>
+            <input id="anthropic-key" type="password" placeholder="sk-ant-..." />
+          </div>
+          <button id="save-anthropic" class="secondary" type="button">Save Anthropic key</button>
+        </div>
+
+        <p id="config-status" class="status"></p>
+        <p id="secrets-status" class="status"></p>
+      </section>
+
+      <section id="panel-style" class="panel" role="tabpanel" aria-labelledby="tab-style" hidden>
+        <p class="hint">Edit `~/.emailbuddy/STYLE.md` and save changes directly.</p>
+        <label for="style-editor">STYLE.md</label>
+        <textarea id="style-editor" spellcheck="false"></textarea>
+        <div class="row">
+          <button id="save-style" class="primary" type="button">Save STYLE.md</button>
+        </div>
+        <p id="style-status" class="status"></p>
+      </section>
+    </main>
+
+    <script>
+      const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+      const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+      const modeEl = document.getElementById('mode');
+      const customEl = document.getElementById('custom-mode');
+      const inputEl = document.getElementById('input');
+      const outputEl = document.getElementById('output');
+      const rewriteStatusEl = document.getElementById('rewrite-status');
+      const rewriteBtn = document.getElementById('rewrite');
+
+      const providerListEl = document.getElementById('provider-order');
+      const timeoutEl = document.getElementById('timeout-ms');
+      const historyEl = document.getElementById('history-enabled');
+      const saveConfigBtn = document.getElementById('save-config');
+      const configStatusEl = document.getElementById('config-status');
+
+      const openaiKeyEl = document.getElementById('openai-key');
+      const anthropicKeyEl = document.getElementById('anthropic-key');
+      const saveOpenAiBtn = document.getElementById('save-openai');
+      const saveAnthropicBtn = document.getElementById('save-anthropic');
+      const secretsStatusEl = document.getElementById('secrets-status');
+      const styleEditorEl = document.getElementById('style-editor');
+      const saveStyleBtn = document.getElementById('save-style');
+      const styleStatusEl = document.getElementById('style-status');
+
+      let providerOrder = [];
+      let draggedIndex = -1;
+
+      function setStatus(el, message, type = 'muted') {
+        el.textContent = message;
+        el.classList.remove('ok', 'error');
+        if (type === 'ok') el.classList.add('ok');
+        if (type === 'error') el.classList.add('error');
+      }
+
+      function activateTab(tabId) {
+        tabs.forEach((tab) => {
+          const selected = tab.id === tabId;
+          tab.setAttribute('aria-selected', String(selected));
+          tab.setAttribute('tabindex', selected ? '0' : '-1');
+        });
+
+        panels.forEach((panel) => {
+          panel.hidden = panel.getAttribute('aria-labelledby') !== tabId;
+        });
+      }
+
+      tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => activateTab(tab.id));
+        tab.addEventListener('keydown', (event) => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          let next = index;
+          if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+          if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+          if (event.key === 'Home') next = 0;
+          if (event.key === 'End') next = tabs.length - 1;
+          tabs[next].focus();
+          activateTab(tabs[next].id);
+        });
+      });
+
+      function reorderProviders(from, to) {
+        if (from < 0 || to < 0 || from === to || from >= providerOrder.length || to >= providerOrder.length) {
+          return;
+        }
+        const next = [...providerOrder];
+        const [moved] = next.splice(from, 1);
+        next.splice(to, 0, moved);
+        providerOrder = next;
+        renderProviderOrder();
+      }
+
+      function clearDropTargets() {
+        providerListEl.querySelectorAll('.drop-target').forEach((el) => el.classList.remove('drop-target'));
+      }
+
+      function renderProviderOrder() {
+        providerListEl.innerHTML = '';
+
+        providerOrder.forEach((provider, index) => {
+          const li = document.createElement('li');
+          li.className = 'provider-item';
+          li.draggable = true;
+          li.dataset.index = String(index);
+
+          li.addEventListener('dragstart', (event) => {
+            draggedIndex = index;
+            li.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', String(index));
+          });
+
+          li.addEventListener('dragend', () => {
+            draggedIndex = -1;
+            li.classList.remove('dragging');
+            clearDropTargets();
+          });
+
+          li.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            clearDropTargets();
+            li.classList.add('drop-target');
+          });
+
+          li.addEventListener('drop', (event) => {
+            event.preventDefault();
+            clearDropTargets();
+            const targetIndex = Number(li.dataset.index);
+            const from = draggedIndex === -1 ? Number(event.dataTransfer.getData('text/plain')) : draggedIndex;
+            reorderProviders(from, targetIndex);
+          });
+
+          const handle = document.createElement('span');
+          handle.className = 'drag-handle';
+          handle.title = 'Drag to reorder';
+          handle.textContent = '::';
+
+          const label = document.createElement('span');
+          label.className = 'provider-label';
+          label.textContent = `${index + 1}. ${provider}`;
+
+          const actions = document.createElement('div');
+          actions.className = 'provider-actions';
+
+          const up = document.createElement('button');
+          up.type = 'button';
+          up.className = 'secondary';
+          up.textContent = 'Move up';
+          up.disabled = index === 0;
+          up.setAttribute('aria-label', `Move ${provider} up`);
+          up.addEventListener('click', () => reorderProviders(index, index - 1));
+
+          const down = document.createElement('button');
+          down.type = 'button';
+          down.className = 'secondary';
+          down.textContent = 'Move down';
+          down.disabled = index === providerOrder.length - 1;
+          down.setAttribute('aria-label', `Move ${provider} down`);
+          down.addEventListener('click', () => reorderProviders(index, index + 1));
+
+          actions.append(up, down);
+          li.append(handle, label, actions);
+          providerListEl.appendChild(li);
+        });
+      }
+
+      async function refreshSecretsStatus() {
+        const res = await fetch('/v1/secrets/status');
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || 'Could not load secrets status');
+
+        setStatus(
+          secretsStatusEl,
+          `OpenAI: ${body.openaiConfigured ? 'configured' : 'missing'} | Anthropic: ${body.anthropicConfigured ? 'configured' : 'missing'}`,
+          'ok'
+        );
+      }
+
+      async function loadSettings() {
+        const [configRes, schemaRes] = await Promise.all([fetch('/v1/config'), fetch('/v1/config/schema')]);
+        const configBody = await configRes.json();
+        const schemaBody = await schemaRes.json();
+
+        if (!configRes.ok) throw new Error(configBody.error || 'Could not load config');
+        if (!schemaRes.ok) throw new Error(schemaBody.error || 'Could not load config schema');
+
+        providerOrder = [...configBody.providerOrder];
+        timeoutEl.min = String(schemaBody.constraints.timeoutMs.min);
+        timeoutEl.max = String(schemaBody.constraints.timeoutMs.max);
+        timeoutEl.value = String(configBody.timeoutMs);
+        historyEl.checked = configBody.history.enabled;
+        renderProviderOrder();
+      }
+
+      async function loadStyleMarkdown() {
+        const res = await fetch('/v1/style');
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || 'Could not load style');
+        styleEditorEl.value = body.markdown ?? '';
+      }
+
+      async function saveConfig() {
+        saveConfigBtn.disabled = true;
+        setStatus(configStatusEl, 'Saving config...');
+        try {
+          const res = await fetch('/v1/config', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              providerOrder,
+              timeoutMs: Number(timeoutEl.value),
+              history: { enabled: historyEl.checked }
+            })
+          });
+          const body = await res.json();
+          if (!res.ok) throw new Error(body.error || 'Could not save config');
+
+          providerOrder = [...body.providerOrder];
+          timeoutEl.value = String(body.timeoutMs);
+          historyEl.checked = body.history.enabled;
+          renderProviderOrder();
+          setStatus(configStatusEl, 'Config saved.', 'ok');
+        } catch (error) {
+          setStatus(configStatusEl, error.message, 'error');
+        } finally {
+          saveConfigBtn.disabled = false;
+        }
+      }
+
+      async function saveSecret(account, value) {
+        const res = await fetch('/v1/secrets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account, value })
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || `Could not save ${account}`);
+      }
+
+      async function saveStyleMarkdown() {
+        const markdown = styleEditorEl.value;
+        if (!markdown.trim()) {
+          setStatus(styleStatusEl, 'STYLE.md cannot be empty.', 'error');
+          return;
+        }
+
+        saveStyleBtn.disabled = true;
+        setStatus(styleStatusEl, 'Saving STYLE.md...');
+        try {
+          const res = await fetch('/v1/style', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ markdown })
+          });
+          const body = await res.json();
+          if (!res.ok) throw new Error(body.error || 'Could not save style');
+
+          styleEditorEl.value = body.markdown ?? markdown;
+          setStatus(styleStatusEl, 'STYLE.md saved.', 'ok');
+        } catch (error) {
+          setStatus(styleStatusEl, error.message, 'error');
+        } finally {
+          saveStyleBtn.disabled = false;
+        }
+      }
+
+      modeEl.addEventListener('change', () => {
+        customEl.style.display = modeEl.value === 'custom' ? 'inline-block' : 'none';
+      });
+
+      rewriteBtn.addEventListener('click', async () => {
+        const text = inputEl.value.trim();
+        if (!text) {
+          setStatus(rewriteStatusEl, 'Input is empty.', 'error');
+          return;
+        }
+
+        const mode = modeEl.value === 'custom' ? (customEl.value.trim() || 'casual') : modeEl.value;
+
+        rewriteBtn.disabled = true;
+        setStatus(rewriteStatusEl, 'Rewriting...');
+        try {
+          const res = await fetch('/v1/rewrite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, mode })
+          });
+          const body = await res.json();
+          if (!res.ok) throw new Error(body.error || 'Rewrite failed');
+
+          outputEl.value = body.rewrittenText;
+          setStatus(rewriteStatusEl, `Done via ${body.providerUsed}.`, 'ok');
+        } catch (error) {
+          setStatus(rewriteStatusEl, error.message, 'error');
+        } finally {
+          rewriteBtn.disabled = false;
+        }
+      });
+
+      saveConfigBtn.addEventListener('click', saveConfig);
+      saveStyleBtn.addEventListener('click', saveStyleMarkdown);
+
+      saveOpenAiBtn.addEventListener('click', async () => {
+        const value = openaiKeyEl.value.trim();
+        if (!value) {
+          setStatus(secretsStatusEl, 'OpenAI key is empty.', 'error');
+          return;
+        }
+
+        saveOpenAiBtn.disabled = true;
+        try {
+          await saveSecret('openai_api_key', value);
+          openaiKeyEl.value = '';
+          await refreshSecretsStatus();
+        } catch (error) {
+          setStatus(secretsStatusEl, error.message, 'error');
+        } finally {
+          saveOpenAiBtn.disabled = false;
+        }
+      });
+
+      saveAnthropicBtn.addEventListener('click', async () => {
+        const value = anthropicKeyEl.value.trim();
+        if (!value) {
+          setStatus(secretsStatusEl, 'Anthropic key is empty.', 'error');
+          return;
+        }
+
+        saveAnthropicBtn.disabled = true;
+        try {
+          await saveSecret('anthropic_api_key', value);
+          anthropicKeyEl.value = '';
+          await refreshSecretsStatus();
+        } catch (error) {
+          setStatus(secretsStatusEl, error.message, 'error');
+        } finally {
+          saveAnthropicBtn.disabled = false;
+        }
+      });
+
+      Promise.all([loadSettings(), refreshSecretsStatus(), loadStyleMarkdown()]).catch((error) => {
+        setStatus(configStatusEl, error.message, 'error');
+      });
+    </script>
+  </body>
+</html>

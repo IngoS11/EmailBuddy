@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EmailBuddy Options</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <h1>EmailBuddy Options</h1>
+        <p>Modern controls for shortcut capture and companion runtime configuration.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Options tabs">
+        <button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="true" tabindex="0">Settings</button>
+        <button id="tab-rewrite" class="tab" role="tab" aria-controls="panel-rewrite" aria-selected="false" tabindex="-1">Test Info</button>
+      </div>
+
+      <section id="panel-settings" class="panel" role="tabpanel" aria-labelledby="tab-settings">
+        <section class="card">
+          <h2>Shortcut</h2>
+          <p class="hint">Capture a key combination directly.</p>
+          <p class="label">Current shortcut</p>
+          <p id="current-shortcut" class="shortcut-value">Cmd+Shift+E</p>
+          <div class="actions">
+            <button id="record-btn" class="primary" type="button">Record shortcut</button>
+            <button id="reset-btn" class="secondary" type="button">Reset default</button>
+          </div>
+          <p id="shortcut-status" class="status"></p>
+        </section>
+
+        <section class="card">
+          <h2>Backend Settings</h2>
+          <p class="hint">Source of truth: <code>http://127.0.0.1:48123</code></p>
+          <p id="backend-connection" class="status"></p>
+
+          <h3>Provider Order</h3>
+          <ul id="provider-order" class="providers"></ul>
+
+          <h3>Runtime</h3>
+          <div class="row">
+            <div class="field">
+              <label for="timeout-ms">Timeout (ms)</label>
+              <input id="timeout-ms" type="number" min="1000" max="60000" step="100" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="history-enabled">History</label>
+              <label><input id="history-enabled" type="checkbox" /> Enable history logging</label>
+            </div>
+          </div>
+          <div class="row">
+            <button id="save-config" class="primary" type="button">Save backend config</button>
+          </div>
+
+          <h3>API Keys</h3>
+          <div class="row">
+            <div class="field">
+              <label for="openai-key">OpenAI</label>
+              <input id="openai-key" type="password" placeholder="sk-..." />
+            </div>
+            <button id="save-openai" class="secondary" type="button">Save OpenAI key</button>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="anthropic-key">Anthropic</label>
+              <input id="anthropic-key" type="password" placeholder="sk-ant-..." />
+            </div>
+            <button id="save-anthropic" class="secondary" type="button">Save Anthropic key</button>
+          </div>
+
+          <p id="backend-status" class="status"></p>
+        </section>
+      </section>
+
+      <section id="panel-rewrite" class="panel" role="tabpanel" aria-labelledby="tab-rewrite" hidden>
+        <section class="card">
+          <h2>Test</h2>
+          <p class="hint">The live rewrite/testing workspace is in the companion app:</p>
+          <p><code>http://127.0.0.1:48123/test-ui</code></p>
+          <p class="hint">Use this options page for settings and shortcut management.</p>
+        </section>
+      </section>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>
