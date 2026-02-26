@@ -100,6 +100,17 @@ npm run uninstall:guided
 ```
 - Note: Chrome extension removal is manual (`chrome://extensions`).
 
+## Releases and GitHub Actions
+- CI workflow: `.github/workflows/ci.yml` (tests + build checks on PR/push).
+- Release workflow: `.github/workflows/release.yml` (builds extension ZIP + macOS DMG + checksums).
+- To publish a GitHub release:
+```bash
+git tag v0.1.1
+git push origin v0.1.1
+```
+- The tagged workflow uploads artifacts to the GitHub Release automatically.
+- For manual artifact generation in CI without tagging, run the Release workflow via `workflow_dispatch`.
+
 ## Optional: Auto-start Companion at Login
 1. Copy and edit [docs/com.emailbuddy.companion.plist](/Users/isauerzapf/Development/emailbuddy/docs/com.emailbuddy.companion.plist) (replace `USERNAME` path).
 2. Install it:

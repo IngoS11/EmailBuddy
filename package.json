@@ -11,6 +11,8 @@
     "test": "node --test",
     "build": "node scripts/build-check.js",
     "install:guided": "sh scripts/install.sh",
-    "uninstall:guided": "sh scripts/uninstall.sh"
+    "uninstall:guided": "sh scripts/uninstall.sh",
+    "release:extension": "sh scripts/release/build-extension-zip.sh 0.1.0-local",
+    "release:dmg": "sh scripts/release/build-dmg.sh 0.1.0-local dist/release/EmailBuddy-Extension-0.1.0-local.zip"
   }
 }

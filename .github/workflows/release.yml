@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build check
+        run: npm run build
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="0.0.0-dev-${GITHUB_RUN_NUMBER}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build extension ZIP
+        id: ext
+        run: |
+          ZIP_PATH=$(sh scripts/release/build-extension-zip.sh "${{ steps.version.outputs.version }}")
+          echo "zip_path=${ZIP_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Build DMG
+        id: dmg
+        run: |
+          DMG_PATH=$(sh scripts/release/build-dmg.sh "${{ steps.version.outputs.version }}" "${{ steps.ext.outputs.zip_path }}")
+          echo "dmg_path=${DMG_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate checksums
+        run: |
+          cd dist/release
+          shasum -a 256 "$(basename \"${{ steps.ext.outputs.zip_path }}\")" "$(basename \"${{ steps.dmg.outputs.dmg_path }}\")" > SHA256SUMS.txt
+
+      - name: Upload release assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/release/*.zip
+            dist/release/*.dmg
+            dist/release/SHA256SUMS.txt
+
+      - name: Upload workflow artifacts (manual runs)
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: emailbuddy-release-assets-${{ steps.version.outputs.version }}
+          path: |
+            dist/release/*.zip
+            dist/release/*.dmg
+            dist/release/SHA256SUMS.txt
