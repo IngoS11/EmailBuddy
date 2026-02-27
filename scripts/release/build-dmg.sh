@@ -8,13 +8,36 @@ fi
 
 VERSION="$1"
 EXTENSION_ZIP_PATH="$2"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+absolute_path() {
+  local input_path="$1"
+  local input_dir
+  local input_base
+  input_dir="$(cd "$(dirname "$input_path")" && pwd)"
+  input_base="$(basename "$input_path")"
+  printf "%s/%s" "$input_dir" "$input_base"
+}
 
 if [[ ! -f "$EXTENSION_ZIP_PATH" ]]; then
   echo "Extension zip not found: $EXTENSION_ZIP_PATH"
-  exit 1
+  echo "Building extension zip for version $VERSION..."
+
+  GENERATED_ZIP="$(sh "$ROOT_DIR/scripts/release/build-extension-zip.sh" "$VERSION")"
+  if [[ ! -f "$GENERATED_ZIP" ]]; then
+    echo "Failed to build extension zip: $GENERATED_ZIP"
+    exit 1
+  fi
+
+  GENERATED_ZIP_ABS="$(absolute_path "$GENERATED_ZIP")"
+  TARGET_ZIP_ABS="$(absolute_path "$EXTENSION_ZIP_PATH")"
+
+  if [[ "$GENERATED_ZIP_ABS" != "$TARGET_ZIP_ABS" ]]; then
+    mkdir -p "$(dirname "$EXTENSION_ZIP_PATH")"
+    cp "$GENERATED_ZIP" "$EXTENSION_ZIP_PATH"
+  fi
 fi
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUT_DIR="$ROOT_DIR/dist/release"
 STAGE_DIR="$OUT_DIR/stage-dmg"
 APP_DIR="$STAGE_DIR/EmailBuddy"

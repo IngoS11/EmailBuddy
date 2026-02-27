@@ -13,6 +13,13 @@
     "install:guided": "sh scripts/install.sh",
     "uninstall:guided": "sh scripts/uninstall.sh",
     "release:extension": "sh scripts/release/build-extension-zip.sh 0.1.0-local",
-    "release:dmg": "sh scripts/release/build-dmg.sh 0.1.0-local dist/release/EmailBuddy-Extension-0.1.0-local.zip"
+    "release:dmg": "sh scripts/release/build-dmg.sh 0.1.0-local dist/release/EmailBuddy-Extension-0.1.0-local.zip",
+    "service:install": "sh scripts/service.sh install",
+    "service:uninstall": "sh scripts/service.sh uninstall",
+    "service:start": "sh scripts/service.sh start",
+    "service:stop": "sh scripts/service.sh stop",
+    "service:restart": "sh scripts/service.sh restart",
+    "service:status": "sh scripts/service.sh status",
+    "service:logs": "sh scripts/service.sh logs"
   }
 }

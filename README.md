@@ -111,10 +111,22 @@ git push origin v0.1.1
 - The tagged workflow uploads artifacts to the GitHub Release automatically.
 - For manual artifact generation in CI without tagging, run the Release workflow via `workflow_dispatch`.
 
-## Optional: Auto-start Companion at Login
-1. Copy and edit [docs/com.emailbuddy.companion.plist](/Users/isauerzapf/Development/emailbuddy/docs/com.emailbuddy.companion.plist) (replace `USERNAME` path).
-2. Install it:
+## Run as a Background Service (macOS)
+Install and enable login auto-start:
 ```bash
-cp docs/com.emailbuddy.companion.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.emailbuddy.companion.plist
+npm run service:install
+```
+
+Manual controls:
+```bash
+npm run service:start
+npm run service:stop
+npm run service:restart
+npm run service:status
+npm run service:logs
+```
+
+Remove the background service:
+```bash
+npm run service:uninstall
 ```

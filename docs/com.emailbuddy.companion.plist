@@ -9,7 +9,7 @@
     <array>
       <string>/usr/bin/env</string>
       <string>node</string>
-      <string>/Users/USERNAME/Development/emailbuddy/apps/companion/src/index.js</string>
+      <string>__EMAILBUDDY_ENTRYPOINT__</string>
     </array>
 
     <key>RunAtLoad</key>

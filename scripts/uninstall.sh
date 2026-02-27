@@ -31,7 +31,7 @@ main() {
   fi
 
   info "Unloading and removing LaunchAgent (if present)..."
-  launchctl unload ~/Library/LaunchAgents/com.emailbuddy.companion.plist 2>/dev/null || true
+  launchctl bootout "gui/$(id -u)/com.emailbuddy.companion" 2>/dev/null || true
   rm -f ~/Library/LaunchAgents/com.emailbuddy.companion.plist
 
   info "Stopping companion listener on port 48123 (if running)..."
