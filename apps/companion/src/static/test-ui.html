@@ -257,9 +257,9 @@
               <option value="custom">custom</option>
             </select>
           </div>
-          <div class="field">
+          <div class="field" id="custom-mode-field" style="display:none;">
             <label for="custom-mode">Custom mode</label>
-            <input id="custom-mode" placeholder="custom mode" style="display:none;" />
+            <input id="custom-mode" placeholder="custom mode" />
           </div>
           <button id="rewrite" class="primary" type="button">Rewrite</button>
         </div>
@@ -333,6 +333,7 @@
       const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
 
       const modeEl = document.getElementById('mode');
+      const customModeFieldEl = document.getElementById('custom-mode-field');
       const customEl = document.getElementById('custom-mode');
       const inputEl = document.getElementById('input');
       const outputEl = document.getElementById('output');
@@ -577,7 +578,7 @@
       }
 
       modeEl.addEventListener('change', () => {
-        customEl.style.display = modeEl.value === 'custom' ? 'inline-block' : 'none';
+        customModeFieldEl.style.display = modeEl.value === 'custom' ? 'grid' : 'none';
       });
 
       rewriteBtn.addEventListener('click', async () => {
