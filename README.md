@@ -60,7 +60,6 @@ Edit `~/.emailbuddy/STYLE.md` to define mode behavior:
 do: sound warm and collaborative
 avoid: stiff wording
 ```
-
 Markdown rules override learned profile traits.
 
 ## API
@@ -92,13 +91,33 @@ npm test
 npm run build
 ```
 
+## Run as a Background Service (macOS)
+Install and enable login auto-start:
+```bash
+npm run service:install
+```
+
 ## Uninstall
 - Full guide: [docs/UNINSTALL.md](/Users/isauerzapf/Development/emailbuddy/docs/UNINSTALL.md)
 - Guided script:
 ```bash
 npm run uninstall:guided
 ```
+- Remove the background service:
+```bash
+npm run service:uninstall
+```
 - Note: Chrome extension removal is manual (`chrome://extensions`).
+
+## Manual Service Controls:
+Use npm run to manually control the service:
+```bash
+npm run service:start
+npm run service:stop
+npm run service:restart
+npm run service:status
+npm run service:logs
+```
 
 ## Releases and GitHub Actions
 - CI workflow: `.github/workflows/ci.yml` (tests + build checks on PR/push).
@@ -111,22 +130,3 @@ git push origin v0.1.1
 - The tagged workflow uploads artifacts to the GitHub Release automatically.
 - For manual artifact generation in CI without tagging, run the Release workflow via `workflow_dispatch`.
 
-## Run as a Background Service (macOS)
-Install and enable login auto-start:
-```bash
-npm run service:install
-```
-
-Manual controls:
-```bash
-npm run service:start
-npm run service:stop
-npm run service:restart
-npm run service:status
-npm run service:logs
-```
-
-Remove the background service:
-```bash
-npm run service:uninstall
-```
