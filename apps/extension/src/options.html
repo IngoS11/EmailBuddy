@@ -14,11 +14,12 @@
       </header>
 
       <div class="tabs" role="tablist" aria-label="Options tabs">
-        <button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="true" tabindex="0">Settings</button>
-        <button id="tab-rewrite" class="tab" role="tab" aria-controls="panel-rewrite" aria-selected="false" tabindex="-1">Test Info</button>
+        <button id="tab-shortcut" class="tab" role="tab" aria-controls="panel-shortcut" aria-selected="true" tabindex="0">Shortcut</button>
+        <button id="tab-backend" class="tab" role="tab" aria-controls="panel-backend" aria-selected="false" tabindex="-1">Backend</button>
+        <button id="tab-test" class="tab" role="tab" aria-controls="panel-test" aria-selected="false" tabindex="-1">Test Workspace</button>
       </div>
 
-      <section id="panel-settings" class="panel" role="tabpanel" aria-labelledby="tab-settings">
+      <section id="panel-shortcut" class="panel" role="tabpanel" aria-labelledby="tab-shortcut">
         <section class="card">
           <h2>Shortcut</h2>
           <p class="hint">Capture a key combination directly.</p>
@@ -30,7 +31,9 @@
           </div>
           <p id="shortcut-status" class="status"></p>
         </section>
+      </section>
 
+      <section id="panel-backend" class="panel" role="tabpanel" aria-labelledby="tab-backend" hidden>
         <section class="card">
           <h2>Backend Settings</h2>
           <p class="hint">Source of truth: <code>http://127.0.0.1:48123</code></p>
@@ -76,12 +79,16 @@
         </section>
       </section>
 
-      <section id="panel-rewrite" class="panel" role="tabpanel" aria-labelledby="tab-rewrite" hidden>
+      <section id="panel-test" class="panel" role="tabpanel" aria-labelledby="tab-test" hidden>
         <section class="card">
-          <h2>Test</h2>
+          <h2>Test Workspace</h2>
           <p class="hint">The live rewrite/testing workspace is in the companion app:</p>
-          <p><code>http://127.0.0.1:48123/test-ui</code></p>
-          <p class="hint">Use this options page for settings and shortcut management.</p>
+          <p>
+            <a href="http://127.0.0.1:48123/test-ui" target="_blank" rel="noopener noreferrer">
+              http://127.0.0.1:48123/test-ui
+            </a>
+          </p>
+          <p class="hint">Click the link to open the backend test UI in a new browser tab.</p>
         </section>
       </section>
     </main>

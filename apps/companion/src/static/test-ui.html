@@ -254,12 +254,7 @@
               <option value="casual">casual</option>
               <option value="polished">polished</option>
               <option value="concise">concise</option>
-              <option value="custom">custom</option>
             </select>
-          </div>
-          <div class="field" id="custom-mode-field" style="display:none;">
-            <label for="custom-mode">Custom mode</label>
-            <input id="custom-mode" placeholder="custom mode" />
           </div>
           <button id="rewrite" class="primary" type="button">Rewrite</button>
         </div>
@@ -333,8 +328,6 @@
       const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
 
       const modeEl = document.getElementById('mode');
-      const customModeFieldEl = document.getElementById('custom-mode-field');
-      const customEl = document.getElementById('custom-mode');
       const inputEl = document.getElementById('input');
       const outputEl = document.getElementById('output');
       const rewriteStatusEl = document.getElementById('rewrite-status');
@@ -577,10 +570,6 @@
         }
       }
 
-      modeEl.addEventListener('change', () => {
-        customModeFieldEl.style.display = modeEl.value === 'custom' ? 'grid' : 'none';
-      });
-
       rewriteBtn.addEventListener('click', async () => {
         const text = inputEl.value.trim();
         if (!text) {
@@ -588,7 +577,7 @@
           return;
         }
 
-        const mode = modeEl.value === 'custom' ? (customEl.value.trim() || 'casual') : modeEl.value;
+        const mode = modeEl.value;
 
         rewriteBtn.disabled = true;
         setStatus(rewriteStatusEl, 'Rewriting...');

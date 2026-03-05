@@ -428,10 +428,10 @@ saveAnthropicBtn.addEventListener('click', onSaveAnthropicKey);
 Promise.all([renderCurrentShortcut(), refreshBackendState()])
   .then(() => {
     updateRecordingUi();
-    activateTab('tab-settings');
+    activateTab('tab-shortcut');
   })
   .catch((error) => {
     setStatus(shortcutStatusEl, `Initialization error: ${error.message}`, 'error');
     updateRecordingUi();
-    activateTab('tab-settings');
+    activateTab('tab-shortcut');
   });

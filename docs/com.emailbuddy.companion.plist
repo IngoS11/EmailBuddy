@@ -7,10 +7,15 @@
 
     <key>ProgramArguments</key>
     <array>
-      <string>/usr/bin/env</string>
-      <string>node</string>
+      <string>__EMAILBUDDY_NODE__</string>
       <string>__EMAILBUDDY_ENTRYPOINT__</string>
     </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>PATH</key>
+      <string>__EMAILBUDDY_PATH__</string>
+    </dict>
 
     <key>RunAtLoad</key>
     <true/>

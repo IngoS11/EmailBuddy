@@ -1,4 +1,6 @@
-import { appendFile, writeFile } from 'node:fs/promises';
+import { appendFile, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   CONFIG_PATH,
   HISTORY_PATH,
@@ -6,7 +8,6 @@ import {
   STYLE_PATH,
   ensureEmailBuddyDir,
   readJson,
-  readText,
   writeJson
 } from './file-utils.js';
 
@@ -35,7 +36,8 @@ export const CONFIG_SCHEMA = {
   }
 };
 
-const DEFAULT_STYLE = `# EmailBuddy Style Configuration\n\n## global\n\ndo: keep language clear and natural for non-native English writer\navoid: overly formal phrases and corporate jargon\n\n## mode: casual\n\ndo: sound warm and collaborative\n\n## mode: polished\n\ndo: improve grammar and sentence flow\n\n## mode: concise\n\ndo: reduce unnecessary words\n`;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DEFAULT_STYLE_TEMPLATE_PATH = path.join(__dirname, 'default-style.md');
 
 function normalizeProviderOrder(order) {
   if (!Array.isArray(order)) {
@@ -153,7 +155,14 @@ export async function getConfigSchema() {
 }
 
 export async function loadStyleMarkdown() {
-  return readText(STYLE_PATH, DEFAULT_STYLE);
+  await ensureEmailBuddyDir();
+  try {
+    return await readFile(STYLE_PATH, 'utf8');
+  } catch {
+    const defaultStyle = await readFile(DEFAULT_STYLE_TEMPLATE_PATH, 'utf8');
+    await writeFile(STYLE_PATH, defaultStyle, 'utf8');
+    return defaultStyle;
+  }
 }
 
 export async function saveStyleMarkdown(markdown) {

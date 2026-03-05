@@ -52,6 +52,12 @@ ollama pull llama3.1:8b
   - Click **Record shortcut** and press your preferred key combination
   - Use the same page to edit backend config (provider order, timeout, history, API keys)
 
+## Global macOS Shortcut (Hammerspoon)
+For global usage outside Gmail/Chrome, use Hammerspoon to send selected text to EmailBuddy Companion and replace it in place.
+
+- Setup guide: [docs/HAMMERSPOON.md](/Users/isauerzapf/Development/emailbuddy/docs/HAMMERSPOON.md)
+- Ready-to-copy script: [docs/hammerspoon-emailbuddy.lua](/Users/isauerzapf/Development/emailbuddy/docs/hammerspoon-emailbuddy.lua)
+
 ## Style Configuration
 Edit `~/.emailbuddy/STYLE.md` to define mode behavior:
 
@@ -129,4 +135,3 @@ git push origin v0.1.1
 ```
 - The tagged workflow uploads artifacts to the GitHub Release automatically.
 - For manual artifact generation in CI without tagging, run the Release workflow via `workflow_dispatch`.
-

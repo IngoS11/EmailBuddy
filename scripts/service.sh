@@ -10,6 +10,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TEMPLATE_PLIST="$REPO_ROOT/docs/com.emailbuddy.companion.plist"
 TARGET_PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 ENTRYPOINT="$REPO_ROOT/apps/companion/src/index.js"
+NODE_BIN=""
 LAUNCH_DOMAIN="gui/$(id -u)"
 LAUNCH_TARGET="$LAUNCH_DOMAIN/$LABEL"
 
@@ -35,6 +36,9 @@ require_macos() {
 ensure_paths() {
   [[ -f "$TEMPLATE_PLIST" ]] || die "missing template plist: $TEMPLATE_PLIST"
   [[ -f "$ENTRYPOINT" ]] || die "missing companion entrypoint: $ENTRYPOINT"
+  NODE_BIN="$(command -v node || true)"
+  [[ -n "$NODE_BIN" ]] || die "node executable not found in PATH"
+  [[ -x "$NODE_BIN" ]] || die "node executable is not runnable: $NODE_BIN"
   mkdir -p "$HOME/Library/LaunchAgents"
 }
 
@@ -43,10 +47,15 @@ is_loaded() {
 }
 
 render_plist() {
-  local escaped_entrypoint
+  local escaped_node escaped_entrypoint escaped_path path_value
+  path_value="$(dirname "$NODE_BIN"):/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+  escaped_node=$(printf '%s' "$NODE_BIN" | sed 's/[\\/&]/\\&/g')
   escaped_entrypoint=$(printf '%s' "$ENTRYPOINT" | sed 's/[\\/&]/\\&/g')
+  escaped_path=$(printf '%s' "$path_value" | sed 's/[\\/&]/\\&/g')
   sed \
+    -e "s#__EMAILBUDDY_NODE__#$escaped_node#g" \
     -e "s#__EMAILBUDDY_ENTRYPOINT__#$escaped_entrypoint#g" \
+    -e "s#__EMAILBUDDY_PATH__#$escaped_path#g" \
     -e "s#/Users/USERNAME/Development/emailbuddy/apps/companion/src/index.js#$escaped_entrypoint#g" \
     "$TEMPLATE_PLIST" > "$TARGET_PLIST"
 }
