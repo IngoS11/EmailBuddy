@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getConfigSchema, loadConfig, loadStyleMarkdown, saveConfig, saveStyleMarkdown } from './config.js';
 import { getSecret, setSecret } from './keychain.js';
+import { getAvailableModels } from './models.js';
 import { buildProfile, rewriteEmail } from './rewrite.js';
 import { getSystemChecks } from './system-checks.js';
 
@@ -168,6 +169,18 @@ async function handler(req, res) {
     if (req.method === 'GET' && url.pathname === '/v1/config/schema') {
       const schema = await getConfigSchema();
       json(res, 200, schema);
+      log('info', 'http.request.end', {
+        requestId,
+        status: 200,
+        durationMs: Date.now() - startedAt
+      });
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/v1/models') {
+      const config = await loadConfig();
+      const models = await getAvailableModels(config);
+      json(res, 200, models);
       log('info', 'http.request.end', {
         requestId,
         status: 200,

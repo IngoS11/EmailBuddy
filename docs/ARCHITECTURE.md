@@ -14,10 +14,10 @@ The extension handles keyboard-triggered rewrite actions and text selection in G
   - Calls local API and replaces the draft text with rewritten output.
 
 - **Companion service (Node HTTP server)**
-  - Exposes `POST /v1/rewrite`, `POST /v1/profile/samples`, `GET/PUT /v1/config`, `GET /v1/config/schema`, `POST /v1/secrets`, `GET /v1/secrets/status`.
+  - Exposes `POST /v1/rewrite`, `POST /v1/profile/samples`, `GET/PUT /v1/config`, `GET /v1/config/schema`, `GET /v1/models`, `POST /v1/secrets`, `GET /v1/secrets/status`.
   - Reads `~/.emailbuddy/STYLE.md` and optional `profile.json`.
   - Merges style/profile directives and builds prompt constraints.
-  - Tries providers in configured order (default: Ollama first, then cloud fallbacks).
+  - Tries configured enabled endpoints in order.
 
 ## Rewrite Request Flow
 1. User presses the configured shortcut in Gmail compose.
@@ -27,7 +27,7 @@ The extension handles keyboard-triggered rewrite actions and text selection in G
 3. Companion:
    - parses style markdown,
    - resolves mode,
-   - attempts providers in `config.providerOrder`.
+   - attempts endpoint IDs in `config.routing.enabled`.
 4. First successful provider returns:
    - `rewrittenText`, `appliedMode`, `providerUsed`, `notes`.
 5. Extension replaces selected/compose text and shows provider status.

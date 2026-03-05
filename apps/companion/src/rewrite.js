@@ -6,6 +6,11 @@ import { buildProviderRegistry } from './providers.js';
 
 const providerRegistry = buildProviderRegistry();
 
+function buildExecutionOrder(config) {
+  const routing = config.routing ?? { enabled: [] };
+  return [...(routing.enabled ?? [])];
+}
+
 export async function rewriteEmail(request, deps = {}) {
   const logger = deps.logger ?? (() => {});
   const requestId = deps.requestId ?? 'n/a';
@@ -24,33 +29,50 @@ export async function rewriteEmail(request, deps = {}) {
 
   const rulesPrompt = styleRulesToPrompt(mergedRules);
   const attempts = [];
+  const endpointById = new Map((config.endpoints ?? []).map((endpoint) => [endpoint.id, endpoint]));
+  const executionOrder = buildExecutionOrder(config);
   logger('rewrite.start', {
     requestId,
     mode,
     textLength: String(request.text ?? '').length,
-    providers: config.providerOrder
+    endpoints: executionOrder
   });
 
-  for (const providerName of config.providerOrder) {
-    const provider = registry[providerName];
-    if (!provider) {
-      logger('rewrite.provider.missing', { requestId, providerName });
+  for (const endpointId of executionOrder) {
+    const endpoint = endpointById.get(endpointId);
+    if (!endpoint) {
+      logger('rewrite.endpoint.missing', { requestId, endpointId });
+      attempts.push(`${endpointId}: endpoint missing in config`);
       continue;
     }
+    const provider = registry[endpoint.type];
+    if (!provider) {
+      logger('rewrite.provider.missing', { requestId, endpointId, providerType: endpoint.type });
+      attempts.push(`${endpointId}: provider type not registered (${endpoint.type})`);
+      continue;
+    }
+    const timeoutMs = endpoint.timeoutMs ?? config.timeoutMs;
 
     try {
       const startedAt = Date.now();
-      logger('rewrite.provider.attempt', { requestId, providerName });
+      logger('rewrite.endpoint.attempt', {
+        requestId,
+        endpointId,
+        providerType: endpoint.type,
+        timeoutMs
+      });
       const rewrittenText = await provider.rewrite({
         text: request.text,
         mode,
         rulesPrompt,
-        timeoutMs: config.timeoutMs
+        timeoutMs,
+        endpointConfig: endpoint.config
       });
       const durationMs = Date.now() - startedAt;
-      logger('rewrite.provider.success', {
+      logger('rewrite.endpoint.success', {
         requestId,
-        providerName,
+        endpointId,
+        providerType: endpoint.type,
         durationMs,
         outputLength: rewrittenText.length
       });
@@ -59,7 +81,8 @@ export async function rewriteEmail(request, deps = {}) {
         await appendHistory({
           ts: new Date().toISOString(),
           mode,
-          provider: providerName,
+          provider: endpoint.type,
+          endpointId: endpoint.id,
           text: request.text,
           rewrittenText
         });
@@ -68,14 +91,16 @@ export async function rewriteEmail(request, deps = {}) {
       return {
         rewrittenText,
         appliedMode: mode,
-        providerUsed: providerName,
+        providerUsed: endpoint.type,
+        endpointUsed: endpoint.id,
         notes: attempts
       };
     } catch (error) {
-      attempts.push(`${providerName}: ${error.message}`);
-      logger('rewrite.provider.error', {
+      attempts.push(`${endpoint.id}: ${error.message}`);
+      logger('rewrite.endpoint.error', {
         requestId,
-        providerName,
+        endpointId: endpoint.id,
+        providerType: endpoint.type,
         error: error.message
       });
     }

@@ -15,7 +15,7 @@ test('rewriteEmail falls back to later provider when first fails', async () => {
         throw new Error('simulated outage');
       }
     },
-    mock: {
+    anthropic: {
       async rewrite({ text }) {
         return `rewritten:${text}`;
       }
@@ -26,7 +26,19 @@ test('rewriteEmail falls back to later provider when first fails', async () => {
     { text: 'hello team', mode: 'casual' },
     {
       config: {
-        providerOrder: ['openai', 'mock'],
+        endpoints: [
+          { id: 'openai', type: 'openai', label: 'OpenAI', config: { model: 'gpt-4.1-mini' } },
+          {
+            id: 'anthropic',
+            type: 'anthropic',
+            label: 'Anthropic',
+            config: { model: 'claude-3-5-haiku-latest' }
+          }
+        ],
+        routing: {
+          enabled: ['openai', 'anthropic'],
+          disabled: []
+        },
         timeoutMs: 100,
         history: { enabled: false }
       },
@@ -37,7 +49,8 @@ test('rewriteEmail falls back to later provider when first fails', async () => {
     }
   );
 
-  assert.equal(result.providerUsed, 'mock');
+  assert.equal(result.providerUsed, 'anthropic');
+  assert.equal(result.endpointUsed, 'anthropic');
   assert.equal(result.rewrittenText, 'rewritten:hello team');
   assert.equal(result.appliedMode, 'casual');
   assert.equal(result.notes.length, 1);

@@ -61,6 +61,10 @@
         margin: 14px 0 18px;
       }
 
+      .subtabs {
+        margin: 0 0 10px;
+      }
+
       .tab {
         border: 0;
         border-radius: 999px;
@@ -95,6 +99,12 @@
 
       [role="tabpanel"][hidden] { display: none; }
 
+      .subpanel {
+        display: grid;
+        gap: 10px;
+        padding: 2px 0;
+      }
+
       .grid-two {
         display: grid;
         grid-template-columns: 1fr;
@@ -127,6 +137,10 @@
         gap: 10px;
         align-items: flex-end;
         flex-wrap: wrap;
+      }
+
+      .row.ollama-row {
+        align-items: flex-start;
       }
 
       .field {
@@ -224,8 +238,11 @@
         width: 100%;
       }
 
-      input[type="checkbox"] {
-        width: auto;
+      #openai-model,
+      #anthropic-model,
+      #remote-ollama-model,
+      #local-ollama-model {
+        max-width: 260px;
       }
 
       @media (max-width: 760px) {
@@ -237,7 +254,6 @@
     <main class="shell">
       <header class="hero">
         <h1>EmailBuddy Companion</h1>
-        <p>Rewrite and settings share one modern interface. Companion config remains source of truth.</p>
       </header>
 
       <div class="tabs" role="tablist" aria-label="Companion panels">
@@ -274,38 +290,98 @@
       </section>
 
       <section id="panel-settings" class="panel" role="tabpanel" aria-labelledby="tab-settings" hidden>
-        <p class="hint">Drag providers to reorder. Click Save to persist.</p>
+        <div class="tabs subtabs" role="tablist" aria-label="Settings sections">
+          <button id="tab-model-order" class="tab" role="tab" aria-controls="panel-model-order" aria-selected="true" tabindex="0">Model Order</button>
+          <button id="tab-ollama" class="tab" role="tab" aria-controls="panel-ollama" aria-selected="false" tabindex="-1">Ollama</button>
+          <button id="tab-cloud-apis" class="tab" role="tab" aria-controls="panel-cloud-apis" aria-selected="false" tabindex="-1">Cloud APIs</button>
+        </div>
 
-        <h3>Provider Order</h3>
-        <ul id="provider-order" class="providers"></ul>
+        <section id="panel-model-order" class="subpanel" role="tabpanel" aria-labelledby="tab-model-order">
+          <p class="hint">Enabled models are tried in this order. Disabled models are not used.</p>
+          <h3>Enabled Models</h3>
+          <ul id="enabled-models" class="providers"></ul>
 
-        <h3>Runtime</h3>
+          <h3>Disabled Models</h3>
+          <ul id="disabled-models" class="providers"></ul>
+
+          <h3>Runtime</h3>
+          <div class="row">
+            <div class="field">
+              <label for="timeout-ms">Timeout (ms)</label>
+              <input id="timeout-ms" type="number" min="1000" max="60000" step="100" />
+            </div>
+            <div class="field">
+              <label for="history-mode">History</label>
+              <select id="history-mode">
+                <option value="disabled">Disabled</option>
+                <option value="enabled">Enabled</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section id="panel-ollama" class="subpanel" role="tabpanel" aria-labelledby="tab-ollama" hidden>
+          <h3>Remote Ollama</h3>
+          <div class="row ollama-row">
+            <div class="field">
+              <label for="remote-ollama-url">URL</label>
+              <input id="remote-ollama-url" type="text" placeholder="http://192.168.1.10:11434" />
+            </div>
+            <div class="field">
+              <label for="remote-ollama-model">Model</label>
+              <select id="remote-ollama-model"></select>
+              <p id="remote-ollama-model-hint" class="hint"></p>
+            </div>
+          </div>
+
+          <h3>Local Ollama</h3>
+          <div class="row ollama-row">
+            <div class="field">
+              <label for="local-ollama-url">URL</label>
+              <input id="local-ollama-url" type="text" placeholder="http://127.0.0.1:11434" />
+            </div>
+            <div class="field">
+              <label for="local-ollama-model">Model</label>
+              <select id="local-ollama-model"></select>
+              <p id="local-ollama-model-hint" class="hint"></p>
+            </div>
+          </div>
+        </section>
+
+        <section id="panel-cloud-apis" class="subpanel" role="tabpanel" aria-labelledby="tab-cloud-apis" hidden>
+          <h3>OpenAI</h3>
+          <div class="row">
+            <div class="field">
+              <label for="openai-model">Model</label>
+              <select id="openai-model"></select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="openai-key">API key</label>
+              <input id="openai-key" type="password" placeholder="sk-..." />
+            </div>
+            <button id="save-openai" class="secondary" type="button">Save OpenAI key</button>
+          </div>
+
+          <h3>Anthropic</h3>
+          <div class="row">
+            <div class="field">
+              <label for="anthropic-model">Model</label>
+              <select id="anthropic-model"></select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="anthropic-key">API key</label>
+              <input id="anthropic-key" type="password" placeholder="sk-ant-..." />
+            </div>
+            <button id="save-anthropic" class="secondary" type="button">Save Anthropic key</button>
+          </div>
+        </section>
+
         <div class="row">
-          <div class="field">
-            <label for="timeout-ms">Timeout (ms)</label>
-            <input id="timeout-ms" type="number" min="1000" max="60000" step="100" />
-          </div>
-          <div class="field">
-            <label for="history-enabled">History</label>
-            <label><input id="history-enabled" type="checkbox" /> Enable history logging</label>
-          </div>
           <button id="save-config" class="primary" type="button">Save config</button>
-        </div>
-
-        <h3>API Keys</h3>
-        <div class="row">
-          <div class="field">
-            <label for="openai-key">OpenAI</label>
-            <input id="openai-key" type="password" placeholder="sk-..." />
-          </div>
-          <button id="save-openai" class="secondary" type="button">Save OpenAI key</button>
-        </div>
-        <div class="row">
-          <div class="field">
-            <label for="anthropic-key">Anthropic</label>
-            <input id="anthropic-key" type="password" placeholder="sk-ant-..." />
-          </div>
-          <button id="save-anthropic" class="secondary" type="button">Save Anthropic key</button>
         </div>
 
         <p id="config-status" class="status"></p>
@@ -324,8 +400,18 @@
     </main>
 
     <script>
-      const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
-      const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+      const topTabs = ['tab-rewrite', 'tab-settings', 'tab-style']
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
+      const topPanels = ['panel-rewrite', 'panel-settings', 'panel-style']
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
+      const settingsTabs = ['tab-model-order', 'tab-ollama', 'tab-cloud-apis']
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
+      const settingsPanels = ['panel-model-order', 'panel-ollama', 'panel-cloud-apis']
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
 
       const modeEl = document.getElementById('mode');
       const inputEl = document.getElementById('input');
@@ -333,14 +419,23 @@
       const rewriteStatusEl = document.getElementById('rewrite-status');
       const rewriteBtn = document.getElementById('rewrite');
 
-      const providerListEl = document.getElementById('provider-order');
+      const enabledListEl = document.getElementById('enabled-models');
+      const disabledListEl = document.getElementById('disabled-models');
       const timeoutEl = document.getElementById('timeout-ms');
-      const historyEl = document.getElementById('history-enabled');
+      const historyModeEl = document.getElementById('history-mode');
       const saveConfigBtn = document.getElementById('save-config');
       const configStatusEl = document.getElementById('config-status');
 
       const openaiKeyEl = document.getElementById('openai-key');
       const anthropicKeyEl = document.getElementById('anthropic-key');
+      const openaiModelEl = document.getElementById('openai-model');
+      const anthropicModelEl = document.getElementById('anthropic-model');
+      const remoteOllamaUrlEl = document.getElementById('remote-ollama-url');
+      const remoteOllamaModelEl = document.getElementById('remote-ollama-model');
+      const remoteOllamaModelHintEl = document.getElementById('remote-ollama-model-hint');
+      const localOllamaUrlEl = document.getElementById('local-ollama-url');
+      const localOllamaModelEl = document.getElementById('local-ollama-model');
+      const localOllamaModelHintEl = document.getElementById('local-ollama-model-hint');
       const saveOpenAiBtn = document.getElementById('save-openai');
       const saveAnthropicBtn = document.getElementById('save-anthropic');
       const secretsStatusEl = document.getElementById('secrets-status');
@@ -348,8 +443,13 @@
       const saveStyleBtn = document.getElementById('save-style');
       const styleStatusEl = document.getElementById('style-status');
 
-      let providerOrder = [];
-      let draggedIndex = -1;
+      let endpointMap = new Map();
+      let enabledOrder = [];
+      let disabledOrder = [];
+      let modelCatalog = {
+        cloud: { openai: [], anthropic: [] },
+        ollama: {}
+      };
 
       function setStatus(el, message, type = 'muted') {
         el.textContent = message;
@@ -358,7 +458,7 @@
         if (type === 'error') el.classList.add('error');
       }
 
-      function activateTab(tabId) {
+      function activateTabGroup(tabs, panels, tabId) {
         tabs.forEach((tab) => {
           const selected = tab.id === tabId;
           tab.setAttribute('aria-selected', String(selected));
@@ -370,80 +470,63 @@
         });
       }
 
-      tabs.forEach((tab, index) => {
-        tab.addEventListener('click', () => activateTab(tab.id));
-        tab.addEventListener('keydown', (event) => {
-          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-          event.preventDefault();
-          let next = index;
-          if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
-          if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
-          if (event.key === 'Home') next = 0;
-          if (event.key === 'End') next = tabs.length - 1;
-          tabs[next].focus();
-          activateTab(tabs[next].id);
+      function bindTabs(tabs, panels) {
+        tabs.forEach((tab, index) => {
+          tab.addEventListener('click', () => activateTabGroup(tabs, panels, tab.id));
+          tab.addEventListener('keydown', (event) => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            let next = index;
+            if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+            if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+            if (event.key === 'Home') next = 0;
+            if (event.key === 'End') next = tabs.length - 1;
+            tabs[next].focus();
+            activateTabGroup(tabs, panels, tabs[next].id);
+          });
         });
-      });
+      }
 
-      function reorderProviders(from, to) {
-        if (from < 0 || to < 0 || from === to || from >= providerOrder.length || to >= providerOrder.length) {
+      bindTabs(topTabs, topPanels);
+      bindTabs(settingsTabs, settingsPanels);
+
+      function reorderEnabled(from, to) {
+        if (from < 0 || to < 0 || from === to || from >= enabledOrder.length || to >= enabledOrder.length) {
           return;
         }
-        const next = [...providerOrder];
+        const next = [...enabledOrder];
         const [moved] = next.splice(from, 1);
         next.splice(to, 0, moved);
-        providerOrder = next;
-        renderProviderOrder();
+        enabledOrder = next;
+        renderModelLists();
       }
 
-      function clearDropTargets() {
-        providerListEl.querySelectorAll('.drop-target').forEach((el) => el.classList.remove('drop-target'));
+      function disableModel(id) {
+        enabledOrder = enabledOrder.filter((entry) => entry !== id);
+        disabledOrder = disabledOrder.filter((entry) => entry !== id);
+        disabledOrder.push(id);
+        renderModelLists();
       }
 
-      function renderProviderOrder() {
-        providerListEl.innerHTML = '';
+      function enableModel(id) {
+        disabledOrder = disabledOrder.filter((entry) => entry !== id);
+        enabledOrder = enabledOrder.filter((entry) => entry !== id);
+        enabledOrder.push(id);
+        renderModelLists();
+      }
 
-        providerOrder.forEach((provider, index) => {
+      function renderEnabledList() {
+        enabledListEl.innerHTML = '';
+        enabledOrder.forEach((id, index) => {
+          const endpoint = endpointMap.get(id);
+          if (!endpoint) return;
+
           const li = document.createElement('li');
           li.className = 'provider-item';
-          li.draggable = true;
-          li.dataset.index = String(index);
-
-          li.addEventListener('dragstart', (event) => {
-            draggedIndex = index;
-            li.classList.add('dragging');
-            event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.setData('text/plain', String(index));
-          });
-
-          li.addEventListener('dragend', () => {
-            draggedIndex = -1;
-            li.classList.remove('dragging');
-            clearDropTargets();
-          });
-
-          li.addEventListener('dragover', (event) => {
-            event.preventDefault();
-            clearDropTargets();
-            li.classList.add('drop-target');
-          });
-
-          li.addEventListener('drop', (event) => {
-            event.preventDefault();
-            clearDropTargets();
-            const targetIndex = Number(li.dataset.index);
-            const from = draggedIndex === -1 ? Number(event.dataTransfer.getData('text/plain')) : draggedIndex;
-            reorderProviders(from, targetIndex);
-          });
-
-          const handle = document.createElement('span');
-          handle.className = 'drag-handle';
-          handle.title = 'Drag to reorder';
-          handle.textContent = '::';
 
           const label = document.createElement('span');
           label.className = 'provider-label';
-          label.textContent = `${index + 1}. ${provider}`;
+          label.textContent = `${index + 1}. ${endpoint.label} (${endpoint.type})`;
 
           const actions = document.createElement('div');
           actions.className = 'provider-actions';
@@ -453,21 +536,267 @@
           up.className = 'secondary';
           up.textContent = 'Move up';
           up.disabled = index === 0;
-          up.setAttribute('aria-label', `Move ${provider} up`);
-          up.addEventListener('click', () => reorderProviders(index, index - 1));
+          up.setAttribute('aria-label', `Move ${endpoint.id} up`);
+          up.addEventListener('click', () => reorderEnabled(index, index - 1));
 
           const down = document.createElement('button');
           down.type = 'button';
           down.className = 'secondary';
           down.textContent = 'Move down';
-          down.disabled = index === providerOrder.length - 1;
-          down.setAttribute('aria-label', `Move ${provider} down`);
-          down.addEventListener('click', () => reorderProviders(index, index + 1));
+          down.disabled = index === enabledOrder.length - 1;
+          down.setAttribute('aria-label', `Move ${endpoint.id} down`);
+          down.addEventListener('click', () => reorderEnabled(index, index + 1));
 
-          actions.append(up, down);
-          li.append(handle, label, actions);
-          providerListEl.appendChild(li);
+          const disableBtn = document.createElement('button');
+          disableBtn.type = 'button';
+          disableBtn.className = 'secondary';
+          disableBtn.textContent = 'Disable';
+          disableBtn.addEventListener('click', () => disableModel(id));
+
+          actions.append(up, down, disableBtn);
+          li.append(label, actions);
+          enabledListEl.appendChild(li);
         });
+      }
+
+      function renderDisabledList() {
+        disabledListEl.innerHTML = '';
+        disabledOrder.forEach((id, index) => {
+          const endpoint = endpointMap.get(id);
+          if (!endpoint) return;
+
+          const li = document.createElement('li');
+          li.className = 'provider-item';
+
+          const label = document.createElement('span');
+          label.className = 'provider-label';
+          label.textContent = `${index + 1}. ${endpoint.label} (${endpoint.type})`;
+
+          const actions = document.createElement('div');
+          actions.className = 'provider-actions';
+
+          const enableBtn = document.createElement('button');
+          enableBtn.type = 'button';
+          enableBtn.className = 'secondary';
+          enableBtn.textContent = 'Enable';
+          enableBtn.addEventListener('click', () => enableModel(id));
+
+          actions.append(enableBtn);
+          li.append(label, actions);
+          disabledListEl.appendChild(li);
+        });
+      }
+
+      function renderModelLists() {
+        renderEnabledList();
+        renderDisabledList();
+      }
+
+      function getEndpoint(id) {
+        return endpointMap.get(id) ?? null;
+      }
+
+      function upsertEndpoint(nextEndpoint) {
+        endpointMap.set(nextEndpoint.id, nextEndpoint);
+      }
+
+      function clearSelect(selectEl) {
+        selectEl.innerHTML = '';
+      }
+
+      function appendOption(selectEl, value, label) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        selectEl.appendChild(option);
+      }
+
+      function populateCloudModelSelect(selectEl, models, configuredModel) {
+        clearSelect(selectEl);
+        const normalizedModels = Array.isArray(models) ? models : [];
+        for (const model of normalizedModels) {
+          appendOption(selectEl, model, model);
+        }
+
+        if (!normalizedModels.length) {
+          appendOption(selectEl, '', 'No models available');
+          selectEl.value = '';
+          return;
+        }
+
+        const fallback = normalizedModels[0];
+        selectEl.value = normalizedModels.includes(configuredModel) ? configuredModel : fallback;
+      }
+
+      function setOllamaModelField({
+        selectEl,
+        hintEl,
+        configuredModel,
+        models,
+        ok,
+        error
+      }) {
+        clearSelect(selectEl);
+        const normalizedModels = Array.isArray(models) ? models : [];
+        const hasConfigured = configuredModel && normalizedModels.includes(configuredModel);
+
+        if (normalizedModels.length) {
+          for (const model of normalizedModels) {
+            appendOption(selectEl, model, model);
+          }
+          if (hasConfigured) {
+            selectEl.value = configuredModel;
+          } else if (configuredModel) {
+            appendOption(selectEl, configuredModel, `${configuredModel} (current)`);
+            selectEl.value = configuredModel;
+          } else {
+            selectEl.value = normalizedModels[0];
+          }
+          hintEl.textContent = ok ? '' : `Using discovered models (${error}).`;
+          return;
+        }
+
+        if (configuredModel) {
+          appendOption(selectEl, configuredModel, `${configuredModel} (current)`);
+          selectEl.value = configuredModel;
+        } else {
+          appendOption(selectEl, '', 'No models available');
+          selectEl.value = '';
+        }
+        hintEl.textContent = error ? `Model discovery unavailable: ${error}` : 'Model discovery unavailable.';
+      }
+
+      function getSelectedOllamaModel(selectEl) {
+        return selectEl.value.trim();
+      }
+
+      function applyModelCatalogToForms() {
+        const remote = getEndpoint('remote-ollama');
+        const local = getEndpoint('local-ollama');
+        const openai = getEndpoint('openai');
+        const anthropic = getEndpoint('anthropic');
+
+        populateCloudModelSelect(
+          openaiModelEl,
+          modelCatalog?.cloud?.openai ?? [],
+          openai?.config?.model ?? ''
+        );
+        populateCloudModelSelect(
+          anthropicModelEl,
+          modelCatalog?.cloud?.anthropic ?? [],
+          anthropic?.config?.model ?? ''
+        );
+
+        const remoteModelInfo = modelCatalog?.ollama?.['remote-ollama'] ?? {
+          ok: false,
+          models: [],
+          error: 'No response from backend'
+        };
+        setOllamaModelField({
+          selectEl: remoteOllamaModelEl,
+          hintEl: remoteOllamaModelHintEl,
+          configuredModel: remote?.config?.model ?? '',
+          ...remoteModelInfo
+        });
+
+        const localModelInfo = modelCatalog?.ollama?.['local-ollama'] ?? {
+          ok: false,
+          models: [],
+          error: 'No response from backend'
+        };
+        setOllamaModelField({
+          selectEl: localOllamaModelEl,
+          hintEl: localOllamaModelHintEl,
+          configuredModel: local?.config?.model ?? '',
+          ...localModelInfo
+        });
+      }
+
+      function syncEndpointFormFields() {
+        const remote = getEndpoint('remote-ollama');
+        const local = getEndpoint('local-ollama');
+
+        if (remote) {
+          remoteOllamaUrlEl.value = remote.config?.baseUrl ?? '';
+        }
+
+        if (local) {
+          localOllamaUrlEl.value = local.config?.baseUrl ?? '';
+        }
+
+        applyModelCatalogToForms();
+      }
+
+      function collectEndpointsForSave() {
+        const remote = getEndpoint('remote-ollama');
+        const local = getEndpoint('local-ollama');
+        const openai = getEndpoint('openai');
+        const anthropic = getEndpoint('anthropic');
+
+        if (!remote || !local || !openai || !anthropic) {
+          throw new Error('Missing required endpoint configuration. Reload the page.');
+        }
+
+        upsertEndpoint({
+          ...remote,
+          config: {
+            ...remote.config,
+            baseUrl: remoteOllamaUrlEl.value.trim(),
+            model: getSelectedOllamaModel(remoteOllamaModelEl)
+          }
+        });
+
+        upsertEndpoint({
+          ...local,
+          config: {
+            ...local.config,
+            baseUrl: localOllamaUrlEl.value.trim(),
+            model: getSelectedOllamaModel(localOllamaModelEl)
+          }
+        });
+
+        upsertEndpoint({
+          ...openai,
+          config: {
+            ...openai.config,
+            model: openaiModelEl.value.trim()
+          }
+        });
+
+        upsertEndpoint({
+          ...anthropic,
+          config: {
+            ...anthropic.config,
+            model: anthropicModelEl.value.trim()
+          }
+        });
+
+        const orderedIds = [...enabledOrder, ...disabledOrder];
+        const orderedSet = new Set(orderedIds);
+        const extras = Array.from(endpointMap.values())
+          .map((endpoint) => endpoint.id)
+          .filter((id) => !orderedSet.has(id));
+
+        return [...orderedIds, ...extras].map((id) => {
+          const endpoint = endpointMap.get(id);
+          const { enabled, ...rest } = endpoint;
+          return rest;
+        });
+      }
+
+      function deriveRouting(configBody) {
+        const routing = configBody?.routing ?? {};
+        if (Array.isArray(routing.enabled) || Array.isArray(routing.disabled)) {
+          return {
+            enabled: [...(routing.enabled ?? [])],
+            disabled: [...(routing.disabled ?? [])]
+          };
+        }
+
+        return {
+          enabled: [...(routing.primary ?? []), ...(routing.fallback ?? [])],
+          disabled: []
+        };
       }
 
       async function refreshSecretsStatus() {
@@ -482,20 +811,51 @@
         );
       }
 
+      async function loadModels() {
+        try {
+          const res = await fetch('/v1/models');
+          const body = await res.json();
+          if (!res.ok) throw new Error(body.error || 'Could not load models');
+          modelCatalog = body;
+        } catch {
+          modelCatalog = {
+            cloud: {
+              openai: ['gpt-4.1-mini'],
+              anthropic: ['claude-3-5-haiku-latest']
+            },
+            ollama: {}
+          };
+        }
+      }
+
       async function loadSettings() {
-        const [configRes, schemaRes] = await Promise.all([fetch('/v1/config'), fetch('/v1/config/schema')]);
+        const [configRes, schemaRes] = await Promise.all([
+          fetch('/v1/config'),
+          fetch('/v1/config/schema')
+        ]);
         const configBody = await configRes.json();
         const schemaBody = await schemaRes.json();
 
         if (!configRes.ok) throw new Error(configBody.error || 'Could not load config');
         if (!schemaRes.ok) throw new Error(schemaBody.error || 'Could not load config schema');
 
-        providerOrder = [...configBody.providerOrder];
+        await loadModels();
+        endpointMap = new Map((configBody.endpoints ?? []).map((endpoint) => [endpoint.id, endpoint]));
+        const routing = deriveRouting(configBody);
+        enabledOrder = routing.enabled;
+        disabledOrder = routing.disabled;
+        const known = new Set([...enabledOrder, ...disabledOrder]);
+        for (const endpoint of endpointMap.values()) {
+          if (!known.has(endpoint.id)) {
+            disabledOrder.push(endpoint.id);
+          }
+        }
         timeoutEl.min = String(schemaBody.constraints.timeoutMs.min);
         timeoutEl.max = String(schemaBody.constraints.timeoutMs.max);
         timeoutEl.value = String(configBody.timeoutMs);
-        historyEl.checked = configBody.history.enabled;
-        renderProviderOrder();
+        historyModeEl.value = configBody.history.enabled ? 'enabled' : 'disabled';
+        syncEndpointFormFields();
+        renderModelLists();
       }
 
       async function loadStyleMarkdown() {
@@ -513,18 +873,33 @@
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              providerOrder,
+              endpoints: collectEndpointsForSave(),
+              routing: {
+                enabled: enabledOrder,
+                disabled: disabledOrder
+              },
               timeoutMs: Number(timeoutEl.value),
-              history: { enabled: historyEl.checked }
+              history: { enabled: historyModeEl.value === 'enabled' }
             })
           });
           const body = await res.json();
           if (!res.ok) throw new Error(body.error || 'Could not save config');
 
-          providerOrder = [...body.providerOrder];
+          await loadModels();
+          endpointMap = new Map((body.endpoints ?? []).map((endpoint) => [endpoint.id, endpoint]));
+          const routing = deriveRouting(body);
+          enabledOrder = routing.enabled;
+          disabledOrder = routing.disabled;
+          const known = new Set([...enabledOrder, ...disabledOrder]);
+          for (const endpoint of endpointMap.values()) {
+            if (!known.has(endpoint.id)) {
+              disabledOrder.push(endpoint.id);
+            }
+          }
           timeoutEl.value = String(body.timeoutMs);
-          historyEl.checked = body.history.enabled;
-          renderProviderOrder();
+          historyModeEl.value = body.history.enabled ? 'enabled' : 'disabled';
+          syncEndpointFormFields();
+          renderModelLists();
           setStatus(configStatusEl, 'Config saved.', 'ok');
         } catch (error) {
           setStatus(configStatusEl, error.message, 'error');
@@ -591,7 +966,9 @@
           if (!res.ok) throw new Error(body.error || 'Rewrite failed');
 
           outputEl.value = body.rewrittenText;
-          setStatus(rewriteStatusEl, `Done via ${body.providerUsed}.`, 'ok');
+          const provider = body.providerUsed ?? 'provider';
+          const endpoint = body.endpointUsed ? ` (${body.endpointUsed})` : '';
+          setStatus(rewriteStatusEl, `Done via ${provider}${endpoint}.`, 'ok');
         } catch (error) {
           setStatus(rewriteStatusEl, error.message, 'error');
         } finally {
@@ -643,6 +1020,9 @@
       Promise.all([loadSettings(), refreshSecretsStatus(), loadStyleMarkdown()]).catch((error) => {
         setStatus(configStatusEl, error.message, 'error');
       });
+
+      activateTabGroup(topTabs, topPanels, 'tab-rewrite');
+      activateTabGroup(settingsTabs, settingsPanels, 'tab-model-order');
     </script>
   </body>
 </html>

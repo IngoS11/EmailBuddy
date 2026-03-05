@@ -4,7 +4,7 @@ EmailBuddy is a macOS-focused toolchain for beautifying Gmail draft text in your
 
 ## Components
 - `apps/extension`: Chrome extension that rewrites draft text from a keyboard shortcut in Gmail compose.
-- `apps/companion`: Local HTTP service (`127.0.0.1:48123`) that rewrites text with Ollama-first + cloud fallback.
+- `apps/companion`: Local HTTP service (`127.0.0.1:48123`) that rewrites text using ordered enabled models.
 - `packages/shared`: Style/profile parsing and common helpers.
 
 ## Requirements
@@ -17,7 +17,7 @@ EmailBuddy is a macOS-focused toolchain for beautifying Gmail draft text in your
 ### Recommended
 - Apple Silicon Mac (M1/M2/M3) with 16 GB RAM or more
 - Ollama installed with local model (`llama3.1:8b` by default)
-- OpenAI and/or Anthropic API key for cloud fallback
+- OpenAI and/or Anthropic API key for cloud models
 - Stable internet for initial setup and model pulls
 
 ## Quick Start
@@ -36,7 +36,7 @@ npm run dev
 security add-generic-password -U -a openai_api_key -s emailbuddy -w '<OPENAI_KEY>'
 security add-generic-password -U -a anthropic_api_key -s emailbuddy -w '<ANTHROPIC_KEY>'
 ```
-3. Ensure local fallback is available:
+3. Ensure local Ollama is available:
 ```bash
 ollama serve
 ollama pull llama3.1:8b
@@ -74,13 +74,14 @@ Markdown rules override learned profile traits.
 - `POST /v1/profile/samples`
 - `GET/PUT /v1/config`
 - `GET /v1/config/schema`
+- `GET /v1/models`
 - `GET/PUT /v1/style`
 - `POST /v1/secrets`
 - `GET /v1/secrets/status`
 
 ## Debugging and Test UI
 - Companion logs now print JSON lines with request IDs, durations, and provider attempt outcomes.
-- Default provider order is now `ollama -> openai -> anthropic` for new installs.
+- Default enabled model order is `openai -> anthropic -> local-ollama`; `remote-ollama` starts disabled until configured.
 - Start the companion:
 ```bash
 npm run dev

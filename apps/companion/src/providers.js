@@ -20,27 +20,46 @@ function rewriteSystemPrompt({ mode, rulesPrompt }) {
   ].join('\n');
 }
 
+async function withTimeout(timeoutMs, task) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await task(controller.signal);
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error(`Provider timed out after ${timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export class OpenAIProvider {
   name = 'openai';
 
-  async rewrite({ text, mode, rulesPrompt, timeoutMs }) {
+  async rewrite({ text, mode, rulesPrompt, timeoutMs, endpointConfig = {} }) {
     const apiKey = await getSecret('openai_api_key');
     if (!apiKey) {
       throw new Error('Missing OpenAI API key in macOS keychain (account: openai_api_key).');
     }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
+      const model = String(endpointConfig.model ?? 'gpt-4.1-mini').trim();
+      if (!model) {
+        throw new Error('OpenAI model must be configured.');
+      }
+
+      return await withTimeout(timeoutMs, async (signal) => {
       const response = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${apiKey}`
         },
-        signal: controller.signal,
+        signal,
         body: JSON.stringify({
-          model: 'gpt-4.1-mini',
+          model,
           input: [
             { role: 'system', content: rewriteSystemPrompt({ mode, rulesPrompt }) },
             { role: 'user', content: text }
@@ -56,8 +75,12 @@ export class OpenAIProvider {
       }
 
       return output;
-    } finally {
-      clearTimeout(timer);
+      });
+    } catch (error) {
+      if (error?.message?.includes('fetch failed')) {
+        throw new Error('OpenAI endpoint unreachable. Check internet access.');
+      }
+      throw error;
     }
   }
 }
@@ -65,15 +88,19 @@ export class OpenAIProvider {
 export class AnthropicProvider {
   name = 'anthropic';
 
-  async rewrite({ text, mode, rulesPrompt, timeoutMs }) {
+  async rewrite({ text, mode, rulesPrompt, timeoutMs, endpointConfig = {} }) {
     const apiKey = await getSecret('anthropic_api_key');
     if (!apiKey) {
       throw new Error('Missing Anthropic API key in macOS keychain (account: anthropic_api_key).');
     }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
+      const model = String(endpointConfig.model ?? 'claude-3-5-haiku-latest').trim();
+      if (!model) {
+        throw new Error('Anthropic model must be configured.');
+      }
+
+      return await withTimeout(timeoutMs, async (signal) => {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -81,9 +108,9 @@ export class AnthropicProvider {
           'x-api-key': apiKey,
           'anthropic-version': '2023-06-01'
         },
-        signal: controller.signal,
+        signal,
         body: JSON.stringify({
-          model: 'claude-3-5-haiku-latest',
+          model,
           max_tokens: 1200,
           temperature: 0.4,
           system: rewriteSystemPrompt({ mode, rulesPrompt }),
@@ -98,8 +125,12 @@ export class AnthropicProvider {
       }
 
       return output;
-    } finally {
-      clearTimeout(timer);
+      });
+    } catch (error) {
+      if (error?.message?.includes('fetch failed')) {
+        throw new Error('Anthropic endpoint unreachable. Check internet access.');
+      }
+      throw error;
     }
   }
 }
@@ -107,16 +138,24 @@ export class AnthropicProvider {
 export class OllamaProvider {
   name = 'ollama';
 
-  async rewrite({ text, mode, rulesPrompt, timeoutMs }) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+  async rewrite({ text, mode, rulesPrompt, timeoutMs, endpointConfig = {} }) {
+    const baseUrl = String(endpointConfig.baseUrl ?? '').trim().replace(/\/$/, '');
+    const model = String(endpointConfig.model ?? '').trim();
+    if (!baseUrl) {
+      throw new Error('Ollama baseUrl must be configured.');
+    }
+    if (!model) {
+      throw new Error('Ollama model must be configured.');
+    }
+
     try {
-      const response = await fetch('http://127.0.0.1:11434/api/generate', {
+      return await withTimeout(timeoutMs, async (signal) => {
+      const response = await fetch(`${baseUrl}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
+        signal,
         body: JSON.stringify({
-          model: 'llama3.1:8b',
+          model,
           stream: false,
           prompt: `${rewriteSystemPrompt({ mode, rulesPrompt })}\n\nEmail:\n${text}\n\nRewritten email:`
         })
@@ -129,8 +168,12 @@ export class OllamaProvider {
       }
 
       return output;
-    } finally {
-      clearTimeout(timer);
+      });
+    } catch (error) {
+      if (error?.message?.includes('fetch failed')) {
+        throw new Error(`Ollama endpoint unreachable at ${baseUrl}. Check LAN/VPN access.`);
+      }
+      throw error;
     }
   }
 }

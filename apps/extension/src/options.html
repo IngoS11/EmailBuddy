@@ -39,40 +39,100 @@
           <p class="hint">Source of truth: <code>http://127.0.0.1:48123</code></p>
           <p id="backend-connection" class="status"></p>
 
-          <h3>Provider Order</h3>
-          <ul id="provider-order" class="providers"></ul>
+          <div class="tabs subtabs" role="tablist" aria-label="Backend sections">
+            <button id="tab-model-order" class="tab" role="tab" aria-controls="panel-model-order" aria-selected="true" tabindex="0">Model Order</button>
+            <button id="tab-ollama" class="tab" role="tab" aria-controls="panel-ollama" aria-selected="false" tabindex="-1">Ollama</button>
+            <button id="tab-cloud-apis" class="tab" role="tab" aria-controls="panel-cloud-apis" aria-selected="false" tabindex="-1">Cloud APIs</button>
+          </div>
 
-          <h3>Runtime</h3>
-          <div class="row">
-            <div class="field">
-              <label for="timeout-ms">Timeout (ms)</label>
-              <input id="timeout-ms" type="number" min="1000" max="60000" step="100" />
+          <section id="panel-model-order" class="subpanel" role="tabpanel" aria-labelledby="tab-model-order">
+            <p class="hint">Enabled models are tried in this order. Disabled models are not used.</p>
+            <h3>Enabled Models</h3>
+            <ul id="enabled-models" class="providers"></ul>
+
+            <h3>Disabled Models</h3>
+            <ul id="disabled-models" class="providers"></ul>
+
+            <h3>Runtime</h3>
+            <div class="row">
+              <div class="field">
+                <label for="timeout-ms">Timeout (ms)</label>
+                <input id="timeout-ms" type="number" min="1000" max="60000" step="100" />
+              </div>
             </div>
-          </div>
-          <div class="row">
-            <div class="field">
-              <label for="history-enabled">History</label>
-              <label><input id="history-enabled" type="checkbox" /> Enable history logging</label>
+            <div class="row">
+              <div class="field">
+                <label for="history-mode">History</label>
+                <select id="history-mode">
+                  <option value="disabled">Disabled</option>
+                  <option value="enabled">Enabled</option>
+                </select>
+              </div>
             </div>
-          </div>
+          </section>
+
+          <section id="panel-ollama" class="subpanel" role="tabpanel" aria-labelledby="tab-ollama" hidden>
+            <h3>Remote Ollama</h3>
+            <div class="row ollama-row">
+              <div class="field">
+                <label for="remote-ollama-url">URL</label>
+                <input id="remote-ollama-url" type="text" placeholder="http://192.168.1.10:11434" />
+              </div>
+              <div class="field">
+                <label for="remote-ollama-model">Model</label>
+                <select id="remote-ollama-model"></select>
+                <p id="remote-ollama-model-hint" class="hint"></p>
+              </div>
+            </div>
+
+            <h3>Local Ollama</h3>
+            <div class="row ollama-row">
+              <div class="field">
+                <label for="local-ollama-url">URL</label>
+                <input id="local-ollama-url" type="text" placeholder="http://127.0.0.1:11434" />
+              </div>
+              <div class="field">
+                <label for="local-ollama-model">Model</label>
+                <select id="local-ollama-model"></select>
+                <p id="local-ollama-model-hint" class="hint"></p>
+              </div>
+            </div>
+          </section>
+
+          <section id="panel-cloud-apis" class="subpanel" role="tabpanel" aria-labelledby="tab-cloud-apis" hidden>
+            <h3>OpenAI</h3>
+            <div class="row">
+              <div class="field">
+                <label for="openai-model">Model</label>
+                <select id="openai-model"></select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label for="openai-key">API key</label>
+                <input id="openai-key" type="password" placeholder="sk-..." />
+              </div>
+              <button id="save-openai" class="secondary" type="button">Save OpenAI key</button>
+            </div>
+
+            <h3>Anthropic</h3>
+            <div class="row">
+              <div class="field">
+                <label for="anthropic-model">Model</label>
+                <select id="anthropic-model"></select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label for="anthropic-key">API key</label>
+                <input id="anthropic-key" type="password" placeholder="sk-ant-..." />
+              </div>
+              <button id="save-anthropic" class="secondary" type="button">Save Anthropic key</button>
+            </div>
+          </section>
+
           <div class="row">
             <button id="save-config" class="primary" type="button">Save backend config</button>
-          </div>
-
-          <h3>API Keys</h3>
-          <div class="row">
-            <div class="field">
-              <label for="openai-key">OpenAI</label>
-              <input id="openai-key" type="password" placeholder="sk-..." />
-            </div>
-            <button id="save-openai" class="secondary" type="button">Save OpenAI key</button>
-          </div>
-          <div class="row">
-            <div class="field">
-              <label for="anthropic-key">Anthropic</label>
-              <input id="anthropic-key" type="password" placeholder="sk-ant-..." />
-            </div>
-            <button id="save-anthropic" class="secondary" type="button">Save Anthropic key</button>
           </div>
 
           <p id="backend-status" class="status"></p>
