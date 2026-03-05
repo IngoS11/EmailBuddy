@@ -1,6 +1,6 @@
 # EmailBuddy
 
-EmailBuddy is a macOS-focused toolchain for beautifying Gmail draft text in your personal style.
+EmailBuddy is a macOS-focused toolchain for beautifying Gmail draft text in your personal style using local Ollama models or the OpenaAI or Anthropics Claude API.
 
 ## Components
 - `apps/extension`: Chrome extension that rewrites draft text from a keyboard shortcut in Gmail compose.
