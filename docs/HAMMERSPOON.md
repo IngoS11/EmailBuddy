@@ -5,7 +5,7 @@ Use this if you want EmailBuddy outside Gmail/Chrome.
 ## What it does
 - Binds global shortcut `Cmd+Shift+E`.
 - Reads selected text from the focused app via macOS Accessibility APIs.
-- Calls EmailBuddy Companion `POST /v1/rewrite` with mode `polished`.
+- Calls EmailBuddy Companion `POST /v1/rewrite` with mode `casual`.
 - Replaces the selected text with rewritten output.
 - On error, leaves the original text unchanged and shows a notification.
 
@@ -30,4 +30,5 @@ Use this if you want EmailBuddy outside Gmail/Chrome.
 - This uses Accessibility selected-text attributes (`AXSelectedText`), so compatibility varies by app.
 - If a target app does not support setting selected text, you will see:
   - `Focused app does not allow AX text replacement.`
-- Current default mode is fixed to `polished` in `docs/hammerspoon-emailbuddy.lua`.
+- Timeout handling is implemented with a Lua timer guard for compatibility across Hammerspoon versions (instead of `hs.http.timeout`).
+- Current default mode is fixed to `casual` in `docs/hammerspoon-emailbuddy.lua`.

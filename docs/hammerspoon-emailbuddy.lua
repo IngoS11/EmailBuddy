@@ -3,7 +3,7 @@
 -- and replaces the current selection in the focused UI element.
 
 local EMAILBUDDY_URL = "http://127.0.0.1:48123/v1/rewrite"
-local EMAILBUDDY_MODE = "polished"
+local EMAILBUDDY_MODE = "casual"
 local EMAILBUDDY_TIMEOUT_SECONDS = 12
 
 local function notify(message, isError)
@@ -62,6 +62,16 @@ local function rewriteSelectedText()
     return
   end
 
+  local requestDone = false
+  local timeoutTimer = hs.timer.doAfter(EMAILBUDDY_TIMEOUT_SECONDS, function()
+    if requestDone then
+      return
+    end
+
+    requestDone = true
+    notify("Rewrite timed out after " .. tostring(EMAILBUDDY_TIMEOUT_SECONDS) .. " seconds.", true)
+  end)
+
   hs.http.asyncPost(
     EMAILBUDDY_URL,
     hs.json.encode({
@@ -70,6 +80,15 @@ local function rewriteSelectedText()
     }),
     { ["Content-Type"] = "application/json" },
     function(status, body)
+      if requestDone then
+        return
+      end
+
+      requestDone = true
+      if timeoutTimer then
+        timeoutTimer:stop()
+      end
+
       if status ~= 200 then
         notify("Rewrite failed (HTTP " .. tostring(status) .. ").", true)
         return
@@ -93,5 +112,4 @@ local function rewriteSelectedText()
   )
 end
 
-hs.http.timeout(EMAILBUDDY_TIMEOUT_SECONDS)
 hs.hotkey.bind({ "cmd", "shift" }, "E", rewriteSelectedText)
