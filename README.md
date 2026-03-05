@@ -55,8 +55,8 @@ ollama pull llama3.1:8b
 ## Global macOS Shortcut (Hammerspoon)
 For global usage outside Gmail/Chrome, use Hammerspoon to send selected text to EmailBuddy Companion and replace it in place.
 
-- Setup guide: [docs/HAMMERSPOON.md](/Users/isauerzapf/Development/emailbuddy/docs/HAMMERSPOON.md)
-- Ready-to-copy script: [docs/hammerspoon-emailbuddy.lua](/Users/isauerzapf/Development/emailbuddy/docs/hammerspoon-emailbuddy.lua)
+- Setup guide: [docs/HAMMERSPOON.md](docs/HAMMERSPOON.md)
+- Ready-to-copy script: [docs/hammerspoon-emailbuddy.lua](docs/hammerspoon-emailbuddy.lua)
 
 ## Style Configuration
 Edit `~/.emailbuddy/STYLE.md` to define mode behavior:
@@ -104,7 +104,7 @@ npm run service:install
 ```
 
 ## Uninstall
-- Full guide: [docs/UNINSTALL.md](/Users/isauerzapf/Development/emailbuddy/docs/UNINSTALL.md)
+- Full guide: [docs/UNINSTALL.md](docs/UNINSTALL.md)
 - Guided script:
 ```bash
 npm run uninstall:guided
