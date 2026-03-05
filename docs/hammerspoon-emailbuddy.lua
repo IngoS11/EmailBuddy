@@ -6,6 +6,67 @@ local EMAILBUDDY_URL = "http://127.0.0.1:48123/v1/rewrite"
 local EMAILBUDDY_MODE = "casual"
 local EMAILBUDDY_TIMEOUT_SECONDS = 12
 
+local function getAttribute(el, name)
+  if not el or type(el.attributeValue) ~= "function" then
+    return nil
+  end
+
+  local ok, value = pcall(el.attributeValue, el, name)
+  if not ok then
+    return nil
+  end
+
+  return value
+end
+
+local function setAttribute(el, name, value)
+  if not el or type(el.setAttributeValue) ~= "function" then
+    return false
+  end
+
+  local ok, changed = pcall(el.setAttributeValue, el, name, value)
+  return ok and changed == true
+end
+
+local function restoreClipboard(previous)
+  if previous == nil then
+    hs.pasteboard.clearContents()
+    return
+  end
+
+  hs.pasteboard.setContents(previous)
+end
+
+local function selectedTextFromClipboard()
+  local before = hs.pasteboard.getContents()
+  local beforeCount = hs.pasteboard.changeCount()
+
+  hs.eventtap.keyStroke({ "cmd" }, "c", 0)
+
+  local copied = nil
+  for _ = 1, 25 do
+    hs.timer.usleep(10000)
+    local current = hs.pasteboard.getContents()
+    local currentCount = hs.pasteboard.changeCount()
+    if type(current) == "string" and current:match("%S") and (currentCount ~= beforeCount or current ~= before) then
+      copied = current
+      break
+    end
+  end
+
+  restoreClipboard(before)
+  return copied
+end
+
+local function pasteTextWithClipboard(text)
+  local before = hs.pasteboard.getContents()
+  hs.pasteboard.setContents(text)
+  hs.eventtap.keyStroke({ "cmd" }, "v", 0)
+  hs.timer.usleep(50000)
+  restoreClipboard(before)
+  return true
+end
+
 local function notify(message, isError)
   hs.notify.new({
     title = "EmailBuddy",
@@ -25,7 +86,7 @@ local function focusedElement()
     return nil
   end
 
-  return system:attributeValue("AXFocusedUIElement")
+  return getAttribute(system, "AXFocusedUIElement")
 end
 
 local function selectedText(el)
@@ -33,7 +94,7 @@ local function selectedText(el)
     return nil
   end
 
-  local text = el:attributeValue("AXSelectedText")
+  local text = getAttribute(el, "AXSelectedText")
   if type(text) ~= "string" then
     return nil
   end
@@ -50,12 +111,20 @@ local function replaceSelectedText(el, text)
     return false
   end
 
-  return el:setAttributeValue("AXSelectedText", text) == true
+  return setAttribute(el, "AXSelectedText", text)
 end
 
 local function rewriteSelectedText()
   local el = focusedElement()
   local source = selectedText(el)
+  local usedClipboardFallback = false
+
+  if not source then
+    source = selectedTextFromClipboard()
+    if source then
+      usedClipboardFallback = true
+    end
+  end
 
   if not source then
     notify("No selected text found in focused app.", true)
@@ -101,13 +170,19 @@ local function rewriteSelectedText()
         return
       end
 
-      if not replaceSelectedText(el, rewritten) then
-        notify("Focused app does not allow AX text replacement.", true)
+      if replaceSelectedText(el, rewritten) then
+        local provider = decoded.providerUsed or "provider"
+        notify("Rewritten via " .. provider .. ".")
         return
       end
 
-      local provider = decoded.providerUsed or "provider"
-      notify("Rewritten via " .. provider .. ".")
+      if usedClipboardFallback and pasteTextWithClipboard(rewritten) then
+        local provider = decoded.providerUsed or "provider"
+        notify("Rewritten via " .. provider .. ".")
+        return
+      end
+
+      notify("Focused app does not allow AX text replacement.", true)
     end
   )
 end
