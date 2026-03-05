@@ -10,7 +10,7 @@ Use this if you want EmailBuddy outside Gmail/Chrome.
 - On error, leaves the original text unchanged and shows a notification.
 
 ## Prerequisites
-- Hammerspoon installed.
+- Hammerspoon installed from [hammerspoon.org](https://www.hammerspoon.org/).
 - EmailBuddy Companion running on `127.0.0.1:48123`:
   ```bash
   npm run service:start
