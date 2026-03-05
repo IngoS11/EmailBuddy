@@ -20,6 +20,50 @@ function rewriteSystemPrompt({ mode, rulesPrompt }) {
   ].join('\n');
 }
 
+export function extractOpenAiResponseText(json) {
+  const direct = typeof json?.output_text === 'string' ? json.output_text.trim() : '';
+  if (direct) {
+    return direct;
+  }
+
+  const chunks = [];
+  if (Array.isArray(json?.output)) {
+    for (const item of json.output) {
+      if (!Array.isArray(item?.content)) {
+        continue;
+      }
+      for (const part of item.content) {
+        if (part?.type === 'output_text' || part?.type === 'text') {
+          const text = String(part?.text ?? '').trim();
+          if (text) {
+            chunks.push(text);
+          }
+        }
+      }
+    }
+  }
+
+  if (chunks.length) {
+    return chunks.join('\n\n');
+  }
+
+  const legacy = json?.choices?.[0]?.message?.content;
+  if (typeof legacy === 'string' && legacy.trim()) {
+    return legacy.trim();
+  }
+
+  if (Array.isArray(legacy)) {
+    const legacyChunks = legacy
+      .map((part) => (typeof part?.text === 'string' ? part.text.trim() : ''))
+      .filter(Boolean);
+    if (legacyChunks.length) {
+      return legacyChunks.join('\n\n');
+    }
+  }
+
+  return '';
+}
+
 async function withTimeout(timeoutMs, task) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -69,9 +113,9 @@ export class OpenAIProvider {
       });
 
       const json = await parseJsonOrThrow(response);
-      const output = json.output_text?.trim();
+      const output = extractOpenAiResponseText(json);
       if (!output) {
-        throw new Error('OpenAI response missing output_text');
+        throw new Error('OpenAI response did not contain rewritten text');
       }
 
       return output;

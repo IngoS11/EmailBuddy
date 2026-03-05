@@ -45,6 +45,7 @@ let backendConnected = false;
 let endpointMap = new Map();
 let enabledOrder = [];
 let disabledOrder = [];
+let draggingEnabledId = null;
 let modelCatalog = {
   cloud: { openai: [], anthropic: [] },
   ollama: {}
@@ -184,6 +185,9 @@ function setBackendEnabled(enabled) {
       button.disabled = !enabled;
     });
   });
+  enabledListEl.querySelectorAll('.provider-item').forEach((item) => {
+    item.draggable = enabled;
+  });
 }
 
 function endpointLabel(endpoint) {
@@ -200,6 +204,15 @@ function reorderEnabled(from, to) {
   next.splice(to, 0, moved);
   enabledOrder = next;
   renderModelLists();
+}
+
+function reorderEnabledById(draggedId, targetId) {
+  const from = enabledOrder.indexOf(draggedId);
+  const to = enabledOrder.indexOf(targetId);
+  if (from === -1 || to === -1 || from === to) {
+    return;
+  }
+  reorderEnabled(from, to);
 }
 
 function disableModel(id) {
@@ -225,6 +238,41 @@ function renderEnabledList() {
 
     const li = document.createElement('li');
     li.className = 'provider-item';
+    li.draggable = backendConnected;
+    li.dataset.modelId = id;
+    li.addEventListener('dragstart', (event) => {
+      draggingEnabledId = id;
+      li.classList.add('dragging');
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', id);
+      }
+    });
+    li.addEventListener('dragend', () => {
+      draggingEnabledId = null;
+      li.classList.remove('dragging');
+      enabledListEl.querySelectorAll('.drop-target').forEach((node) => node.classList.remove('drop-target'));
+    });
+    li.addEventListener('dragover', (event) => {
+      if (!draggingEnabledId || draggingEnabledId === id) return;
+      event.preventDefault();
+      li.classList.add('drop-target');
+    });
+    li.addEventListener('dragleave', () => {
+      li.classList.remove('drop-target');
+    });
+    li.addEventListener('drop', (event) => {
+      event.preventDefault();
+      li.classList.remove('drop-target');
+      const draggedId = draggingEnabledId || event.dataTransfer?.getData('text/plain');
+      if (!draggedId || draggedId === id) return;
+      reorderEnabledById(draggedId, id);
+    });
+
+    const handle = document.createElement('span');
+    handle.className = 'drag-handle';
+    handle.title = 'Drag to reorder';
+    handle.textContent = '::';
 
     const label = document.createElement('span');
     label.className = 'provider-label';
@@ -233,28 +281,14 @@ function renderEnabledList() {
     const actions = document.createElement('div');
     actions.className = 'provider-actions';
 
-    const up = document.createElement('button');
-    up.type = 'button';
-    up.className = 'secondary';
-    up.textContent = 'Move up';
-    up.disabled = index === 0;
-    up.addEventListener('click', () => reorderEnabled(index, index - 1));
-
-    const down = document.createElement('button');
-    down.type = 'button';
-    down.className = 'secondary';
-    down.textContent = 'Move down';
-    down.disabled = index === enabledOrder.length - 1;
-    down.addEventListener('click', () => reorderEnabled(index, index + 1));
-
     const disableBtn = document.createElement('button');
     disableBtn.type = 'button';
     disableBtn.className = 'secondary';
     disableBtn.textContent = 'Disable';
     disableBtn.addEventListener('click', () => disableModel(id));
 
-    actions.append(up, down, disableBtn);
-    li.append(label, actions);
+    actions.append(disableBtn);
+    li.append(handle, label, actions);
     enabledListEl.appendChild(li);
   });
 }
