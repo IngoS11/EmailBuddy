@@ -42,7 +42,7 @@ test('validateConfig rejects timeout outside allowed range', () => {
   }, /timeoutMs must be between/);
 });
 
-test('validateConfig rejects unsupported cloud model names', () => {
+test('validateConfig rejects empty cloud model names', () => {
   assert.throws(() => {
     validateConfig({
       ...CONFIG_SCHEMA.defaults,
@@ -50,10 +50,44 @@ test('validateConfig rejects unsupported cloud model names', () => {
         endpoint.id === 'openai'
           ? {
               ...endpoint,
-              config: { ...endpoint.config, model: 'gpt-unknown' }
+              config: { ...endpoint.config, model: '' }
             }
           : endpoint
       )
     });
-  }, /Unsupported OpenAI model/);
+  }, /openai endpoint config.model must be a non-empty string/);
+});
+
+test('validateConfig accepts non-listed openai model names', () => {
+  const config = validateConfig({
+    ...CONFIG_SCHEMA.defaults,
+    endpoints: CONFIG_SCHEMA.defaults.endpoints.map((endpoint) =>
+      endpoint.id === 'openai'
+        ? {
+            ...endpoint,
+            config: { ...endpoint.config, model: 'gpt-5-mini' }
+          }
+        : endpoint
+    )
+  });
+
+  const openai = config.endpoints.find((endpoint) => endpoint.id === 'openai');
+  assert.equal(openai?.config?.model, 'gpt-5-mini');
+});
+
+test('validateConfig accepts non-listed anthropic model names', () => {
+  const config = validateConfig({
+    ...CONFIG_SCHEMA.defaults,
+    endpoints: CONFIG_SCHEMA.defaults.endpoints.map((endpoint) =>
+      endpoint.id === 'anthropic'
+        ? {
+            ...endpoint,
+            config: { ...endpoint.config, model: 'claude-haiku-4-5-20251001' }
+          }
+        : endpoint
+    )
+  });
+
+  const anthropic = config.endpoints.find((endpoint) => endpoint.id === 'anthropic');
+  assert.equal(anthropic?.config?.model, 'claude-haiku-4-5-20251001');
 });

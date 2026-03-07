@@ -1,6 +1,7 @@
 const SHORTCUT_KEY = 'shortcut';
 const DEFAULT_SHORTCUT = 'Meta+Shift+E';
 const API_BASE = 'http://127.0.0.1:48123';
+const HIDE_NON_CHAT_OLLAMA_MODELS_KEY = 'emailbuddy.hideNonChatOllamaModels';
 
 const topTabs = ['tab-shortcut', 'tab-backend', 'tab-test']
   .map((id) => document.getElementById(id))
@@ -36,6 +37,7 @@ const remoteOllamaModelHintEl = document.getElementById('remote-ollama-model-hin
 const localOllamaUrlEl = document.getElementById('local-ollama-url');
 const localOllamaModelEl = document.getElementById('local-ollama-model');
 const localOllamaModelHintEl = document.getElementById('local-ollama-model-hint');
+const filterOllamaModelsEl = document.getElementById('filter-ollama-models');
 const saveOpenAiBtn = document.getElementById('save-openai');
 const saveAnthropicBtn = document.getElementById('save-anthropic');
 const backendStatusEl = document.getElementById('backend-status');
@@ -50,6 +52,32 @@ let modelCatalog = {
   cloud: { openai: [], anthropic: [] },
   ollama: {}
 };
+let hideNonChatOllamaModels = false;
+
+function isLikelyNonChatOllamaModel(model) {
+  const value = String(model ?? '').trim().toLowerCase();
+  if (!value) return false;
+  return /embed|embedding|rerank|bge|colbert|e5|minilm|nomic-embed|mxbai-embed/.test(value);
+}
+
+function filterOllamaModels(models) {
+  const normalized = Array.isArray(models) ? models : [];
+  if (!hideNonChatOllamaModels) {
+    return { models: normalized, hiddenCount: 0 };
+  }
+
+  const filtered = normalized.filter((model) => !isLikelyNonChatOllamaModel(model));
+  return { models: filtered, hiddenCount: normalized.length - filtered.length };
+}
+
+function buildOllamaHint(ok, error, hiddenCount) {
+  const hiddenNote = hiddenCount > 0 ? `${hiddenCount} likely non-chat model${hiddenCount === 1 ? '' : 's'} hidden.` : '';
+  if (!ok) {
+    const discoveryNote = `Using discovered models (${error}).`;
+    return hiddenNote ? `${discoveryNote} ${hiddenNote}` : discoveryNote;
+  }
+  return hiddenNote;
+}
 
 function setStatus(element, message, type = 'muted') {
   element.textContent = message;
@@ -172,6 +200,7 @@ function setBackendEnabled(enabled) {
     remoteOllamaModelEl,
     localOllamaUrlEl,
     localOllamaModelEl,
+    filterOllamaModelsEl,
     saveOpenAiBtn,
     saveAnthropicBtn
   ];
@@ -372,7 +401,7 @@ function setOllamaModelField({
   error
 }) {
   clearSelect(selectEl);
-  const normalizedModels = Array.isArray(models) ? models : [];
+  const { models: normalizedModels, hiddenCount } = filterOllamaModels(models);
   const hasConfigured = configuredModel && normalizedModels.includes(configuredModel);
 
   if (normalizedModels.length) {
@@ -387,7 +416,7 @@ function setOllamaModelField({
     } else {
       selectEl.value = normalizedModels[0];
     }
-    hintEl.textContent = ok ? '' : `Using discovered models (${error}).`;
+    hintEl.textContent = buildOllamaHint(ok, error, hiddenCount);
     return;
   }
 
@@ -398,7 +427,9 @@ function setOllamaModelField({
     appendOption(selectEl, '', 'No models available');
     selectEl.value = '';
   }
-  hintEl.textContent = error ? `Model discovery unavailable: ${error}` : 'Model discovery unavailable.';
+  const baseHint = error ? `Model discovery unavailable: ${error}` : 'Model discovery unavailable.';
+  const hiddenHint = hiddenCount > 0 ? `${hiddenCount} likely non-chat model${hiddenCount === 1 ? '' : 's'} hidden.` : '';
+  hintEl.textContent = hiddenHint ? `${baseHint} ${hiddenHint}` : baseHint;
 }
 
 function getSelectedOllamaModel(selectEl) {
@@ -551,7 +582,7 @@ async function refreshModelCatalog() {
     modelCatalog = {
       cloud: {
         openai: ['gpt-4.1-mini'],
-        anthropic: ['claude-3-5-haiku-latest']
+        anthropic: ['claude-sonnet-4-6']
       },
       ollama: {}
     };
@@ -704,6 +735,30 @@ async function renderCurrentShortcut() {
   currentShortcutEl.textContent = formatShortcutLabel(shortcut);
 }
 
+function loadOllamaFilterPreference() {
+  try {
+    hideNonChatOllamaModels = localStorage.getItem(HIDE_NON_CHAT_OLLAMA_MODELS_KEY) === 'true';
+  } catch {
+    hideNonChatOllamaModels = false;
+  }
+  if (filterOllamaModelsEl) {
+    filterOllamaModelsEl.checked = hideNonChatOllamaModels;
+  }
+}
+
+function bindOllamaFilterToggle() {
+  if (!filterOllamaModelsEl) return;
+  filterOllamaModelsEl.addEventListener('change', () => {
+    hideNonChatOllamaModels = filterOllamaModelsEl.checked;
+    try {
+      localStorage.setItem(HIDE_NON_CHAT_OLLAMA_MODELS_KEY, String(hideNonChatOllamaModels));
+    } catch {
+      // Ignore localStorage failures and keep session state.
+    }
+    applyModelCatalogToForms();
+  });
+}
+
 async function saveShortcut(shortcut) {
   const serialized = serializeShortcut(shortcut);
   await chrome.storage.sync.set({ [SHORTCUT_KEY]: serialized });
@@ -771,6 +826,9 @@ resetBtn.addEventListener('click', async () => {
 saveConfigBtn.addEventListener('click', saveBackendConfig);
 saveOpenAiBtn.addEventListener('click', onSaveOpenAiKey);
 saveAnthropicBtn.addEventListener('click', onSaveAnthropicKey);
+
+loadOllamaFilterPreference();
+bindOllamaFilterToggle();
 
 Promise.all([renderCurrentShortcut(), refreshBackendState()]).catch((error) => {
   setStatus(shortcutStatusEl, error.message, 'error');

@@ -71,10 +71,17 @@
             </div>
           </section>
 
-          <section id="panel-ollama" class="subpanel" role="tabpanel" aria-labelledby="tab-ollama" hidden>
-            <h3>Remote Ollama</h3>
-            <div class="row ollama-row">
-              <div class="field">
+        <section id="panel-ollama" class="subpanel" role="tabpanel" aria-labelledby="tab-ollama" hidden>
+          <div class="row toggle-row">
+            <label class="inline-toggle" for="filter-ollama-models">
+              <input id="filter-ollama-models" type="checkbox" />
+              Hide likely non-chat Ollama models
+            </label>
+          </div>
+
+          <h3>Remote Ollama</h3>
+          <div class="row ollama-row">
+            <div class="field">
                 <label for="remote-ollama-url">URL</label>
                 <input id="remote-ollama-url" type="text" placeholder="http://192.168.1.10:11434" />
               </div>

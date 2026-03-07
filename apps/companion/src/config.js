@@ -38,7 +38,7 @@ const DEFAULT_ENDPOINTS = [
     type: 'anthropic',
     label: 'Anthropic',
     config: {
-      model: 'claude-3-5-haiku-latest'
+      model: 'claude-3-haiku-20240307'
     }
   },
   {
@@ -176,14 +176,6 @@ function normalizeModel(model, providerType) {
   const value = String(model ?? '').trim();
   if (!value) {
     throw new Error(`${providerType} endpoint config.model must be a non-empty string`);
-  }
-
-  if (providerType === 'openai' && !CONFIG_SCHEMA.constraints.models.openai.includes(value)) {
-    throw new Error(`Unsupported OpenAI model: ${value}`);
-  }
-
-  if (providerType === 'anthropic' && !CONFIG_SCHEMA.constraints.models.anthropic.includes(value)) {
-    throw new Error(`Unsupported Anthropic model: ${value}`);
   }
 
   return value;
