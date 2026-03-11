@@ -41,6 +41,12 @@ security add-generic-password -U -a anthropic_api_key -s emailbuddy -w '<ANTHROP
 ollama serve
 ollama pull llama3.1:8b
 ```
+## Optional: Custom Ollama Modelfile
+Using a custom Ollama Modelfile is optional. EmailBuddy works with standard pulled models (for example `llama3.1:8b`) out of the box.
+
+If you want to customize model behavior, you can use the repository's example Modelfile:
+- [Modelfile](./Modelfile)
+
 4. Load extension in Chrome:
 - Open `chrome://extensions`
 - Enable Developer Mode
