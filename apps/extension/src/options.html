@@ -10,7 +10,6 @@
     <main class="shell">
       <header class="hero">
         <h1>EmailBuddy Options</h1>
-        <p>Modern controls for shortcut capture and companion runtime configuration.</p>
       </header>
 
       <div class="tabs" role="tablist" aria-label="Options tabs">
@@ -22,8 +21,6 @@
       <section id="panel-shortcut" class="panel" role="tabpanel" aria-labelledby="tab-shortcut">
         <section class="card">
           <h2>Shortcut</h2>
-          <p class="hint">Capture a key combination directly.</p>
-          <p class="label">Current shortcut</p>
           <p id="current-shortcut" class="shortcut-value">Cmd+Shift+E</p>
           <div class="actions">
             <button id="record-btn" class="primary" type="button">Record shortcut</button>
@@ -35,8 +32,6 @@
 
       <section id="panel-backend" class="panel" role="tabpanel" aria-labelledby="tab-backend" hidden>
         <section class="card">
-          <h2>Backend Settings</h2>
-          <p class="hint">Source of truth: <code>http://127.0.0.1:48123</code></p>
           <p id="backend-connection" class="status"></p>
 
           <div class="tabs subtabs" role="tablist" aria-label="Backend sections">

@@ -71,7 +71,7 @@ export const CONFIG_SCHEMA = {
     history: {
       enabled: false
     },
-    timeoutMs: 12000
+    timeoutMs: 36000
   },
   constraints: {
     timeoutMs: {

@@ -633,7 +633,7 @@ async function refreshBackendState() {
     await refreshModelCatalog();
 
     backendConnected = true;
-    setStatus(connectionEl, 'Connected to companion service.', 'ok');
+    setStatus(connectionEl, '');
 
     endpointMap = new Map((config.endpoints ?? []).map((endpoint) => [endpoint.id, endpoint]));
     const routing = deriveRouting(config);

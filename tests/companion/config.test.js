@@ -7,7 +7,7 @@ test('validateConfig accepts enabled/disabled endpoint defaults', () => {
   assert.deepEqual(config.routing.enabled, ['openai', 'anthropic', 'local-ollama']);
   assert.deepEqual(config.routing.disabled, ['remote-ollama']);
   assert.equal(config.endpoints.length, 4);
-  assert.equal(config.timeoutMs, 12000);
+  assert.equal(config.timeoutMs, 36000);
   assert.equal(config.history.enabled, false);
 });
 

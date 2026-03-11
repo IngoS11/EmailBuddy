@@ -54,6 +54,10 @@ h1, h2, h3 {
   margin: 8px 0 12px;
 }
 
+#backend-connection:empty {
+  display: none;
+}
+
 .tab {
   border: 0;
   border-radius: 999px;
