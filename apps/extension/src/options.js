@@ -31,11 +31,15 @@ const openaiKeyEl = document.getElementById('openai-key');
 const anthropicKeyEl = document.getElementById('anthropic-key');
 const openaiModelEl = document.getElementById('openai-model');
 const anthropicModelEl = document.getElementById('anthropic-model');
+const reloadOpenAiModelsBtn = document.getElementById('reload-openai-models');
+const reloadAnthropicModelsBtn = document.getElementById('reload-anthropic-models');
 const remoteOllamaUrlEl = document.getElementById('remote-ollama-url');
 const remoteOllamaModelEl = document.getElementById('remote-ollama-model');
+const reloadRemoteOllamaModelsBtn = document.getElementById('reload-remote-ollama-models');
 const remoteOllamaModelHintEl = document.getElementById('remote-ollama-model-hint');
 const localOllamaUrlEl = document.getElementById('local-ollama-url');
 const localOllamaModelEl = document.getElementById('local-ollama-model');
+const reloadLocalOllamaModelsBtn = document.getElementById('reload-local-ollama-models');
 const localOllamaModelHintEl = document.getElementById('local-ollama-model-hint');
 const filterOllamaModelsEl = document.getElementById('filter-ollama-models');
 const saveOpenAiBtn = document.getElementById('save-openai');
@@ -48,11 +52,18 @@ let endpointMap = new Map();
 let enabledOrder = [];
 let disabledOrder = [];
 let draggingEnabledId = null;
+let reloadingModelCatalog = false;
 let modelCatalog = {
   cloud: { openai: [], anthropic: [] },
   ollama: {}
 };
 let hideNonChatOllamaModels = false;
+const modelReloadButtons = [
+  reloadRemoteOllamaModelsBtn,
+  reloadLocalOllamaModelsBtn,
+  reloadOpenAiModelsBtn,
+  reloadAnthropicModelsBtn
+].filter(Boolean);
 
 function isLikelyNonChatOllamaModel(model) {
   const value = String(model ?? '').trim().toLowerCase();
@@ -196,10 +207,14 @@ function setBackendEnabled(enabled) {
     anthropicKeyEl,
     openaiModelEl,
     anthropicModelEl,
+    reloadOpenAiModelsBtn,
+    reloadAnthropicModelsBtn,
     remoteOllamaUrlEl,
     remoteOllamaModelEl,
+    reloadRemoteOllamaModelsBtn,
     localOllamaUrlEl,
     localOllamaModelEl,
+    reloadLocalOllamaModelsBtn,
     filterOllamaModelsEl,
     saveOpenAiBtn,
     saveAnthropicBtn
@@ -217,6 +232,15 @@ function setBackendEnabled(enabled) {
   enabledListEl.querySelectorAll('.provider-item').forEach((item) => {
     item.draggable = enabled;
   });
+
+  syncModelReloadButtonsState();
+}
+
+function syncModelReloadButtonsState() {
+  for (const button of modelReloadButtons) {
+    button.disabled = !backendConnected || reloadingModelCatalog;
+    button.textContent = reloadingModelCatalog ? 'Reloading...' : 'Reload';
+  }
 }
 
 function endpointLabel(endpoint) {
@@ -408,25 +432,13 @@ function setOllamaModelField({
     for (const model of normalizedModels) {
       appendOption(selectEl, model, model);
     }
-    if (hasConfigured) {
-      selectEl.value = configuredModel;
-    } else if (configuredModel) {
-      appendOption(selectEl, configuredModel, `${configuredModel} (current)`);
-      selectEl.value = configuredModel;
-    } else {
-      selectEl.value = normalizedModels[0];
-    }
+    selectEl.value = hasConfigured ? configuredModel : normalizedModels[0];
     hintEl.textContent = buildOllamaHint(ok, error, hiddenCount);
     return;
   }
 
-  if (configuredModel) {
-    appendOption(selectEl, configuredModel, `${configuredModel} (current)`);
-    selectEl.value = configuredModel;
-  } else {
-    appendOption(selectEl, '', 'No models available');
-    selectEl.value = '';
-  }
+  appendOption(selectEl, '', 'No models available');
+  selectEl.value = '';
   const baseHint = error ? `Model discovery unavailable: ${error}` : 'Model discovery unavailable.';
   const hiddenHint = hiddenCount > 0 ? `${hiddenCount} likely non-chat model${hiddenCount === 1 ? '' : 's'} hidden.` : '';
   hintEl.textContent = hiddenHint ? `${baseHint} ${hiddenHint}` : baseHint;
@@ -578,6 +590,7 @@ function deriveRouting(config) {
 async function refreshModelCatalog() {
   try {
     modelCatalog = await callApi('/v1/models');
+    return true;
   } catch {
     modelCatalog = {
       cloud: {
@@ -586,6 +599,27 @@ async function refreshModelCatalog() {
       },
       ollama: {}
     };
+    return false;
+  }
+}
+
+async function reloadModelCatalogFromUi() {
+  if (!backendConnected || reloadingModelCatalog) return;
+
+  reloadingModelCatalog = true;
+  syncModelReloadButtonsState();
+  setStatus(backendStatusEl, 'Reloading model lists...');
+  try {
+    const ok = await refreshModelCatalog();
+    applyModelCatalogToForms();
+    if (ok) {
+      setStatus(backendStatusEl, 'Model lists reloaded.', 'ok');
+      return;
+    }
+    setStatus(backendStatusEl, 'Model reload failed; using fallback model list.', 'error');
+  } finally {
+    reloadingModelCatalog = false;
+    syncModelReloadButtonsState();
   }
 }
 
@@ -826,6 +860,9 @@ resetBtn.addEventListener('click', async () => {
 saveConfigBtn.addEventListener('click', saveBackendConfig);
 saveOpenAiBtn.addEventListener('click', onSaveOpenAiKey);
 saveAnthropicBtn.addEventListener('click', onSaveAnthropicKey);
+for (const button of modelReloadButtons) {
+  button.addEventListener('click', reloadModelCatalogFromUi);
+}
 
 loadOllamaFilterPreference();
 bindOllamaFilterToggle();

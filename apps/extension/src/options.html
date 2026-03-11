@@ -16,7 +16,7 @@
       <div class="tabs" role="tablist" aria-label="Options tabs">
         <button id="tab-shortcut" class="tab" role="tab" aria-controls="panel-shortcut" aria-selected="true" tabindex="0">Shortcut</button>
         <button id="tab-backend" class="tab" role="tab" aria-controls="panel-backend" aria-selected="false" tabindex="-1">Backend</button>
-        <button id="tab-test" class="tab" role="tab" aria-controls="panel-test" aria-selected="false" tabindex="-1">Test Workspace</button>
+        <button id="tab-test" class="tab" role="tab" aria-controls="panel-test" aria-selected="false" tabindex="-1">Companion Console</button>
       </div>
 
       <section id="panel-shortcut" class="panel" role="tabpanel" aria-labelledby="tab-shortcut">
@@ -87,7 +87,10 @@
               </div>
               <div class="field">
                 <label for="remote-ollama-model">Model</label>
-                <select id="remote-ollama-model"></select>
+                <div class="model-select-row">
+                  <select id="remote-ollama-model"></select>
+                  <button id="reload-remote-ollama-models" class="secondary reload-model-btn" type="button">Reload</button>
+                </div>
                 <p id="remote-ollama-model-hint" class="hint"></p>
               </div>
             </div>
@@ -100,7 +103,10 @@
               </div>
               <div class="field">
                 <label for="local-ollama-model">Model</label>
-                <select id="local-ollama-model"></select>
+                <div class="model-select-row">
+                  <select id="local-ollama-model"></select>
+                  <button id="reload-local-ollama-models" class="secondary reload-model-btn" type="button">Reload</button>
+                </div>
                 <p id="local-ollama-model-hint" class="hint"></p>
               </div>
             </div>
@@ -111,7 +117,10 @@
             <div class="row">
               <div class="field">
                 <label for="openai-model">Model</label>
-                <select id="openai-model"></select>
+                <div class="model-select-row">
+                  <select id="openai-model"></select>
+                  <button id="reload-openai-models" class="secondary reload-model-btn" type="button">Reload</button>
+                </div>
               </div>
             </div>
             <div class="row">
@@ -126,7 +135,10 @@
             <div class="row">
               <div class="field">
                 <label for="anthropic-model">Model</label>
-                <select id="anthropic-model"></select>
+                <div class="model-select-row">
+                  <select id="anthropic-model"></select>
+                  <button id="reload-anthropic-models" class="secondary reload-model-btn" type="button">Reload</button>
+                </div>
               </div>
             </div>
             <div class="row">
@@ -148,11 +160,11 @@
 
       <section id="panel-test" class="panel" role="tabpanel" aria-labelledby="tab-test" hidden>
         <section class="card">
-          <h2>Test Workspace</h2>
-          <p class="hint">The live rewrite/testing workspace is in the companion app:</p>
+          <h2>Companion Console</h2>
+          <p class="hint">The live rewrite/settings workspace is in the companion app:</p>
           <p>
-            <a href="http://127.0.0.1:48123/test-ui" target="_blank" rel="noopener noreferrer">
-              http://127.0.0.1:48123/test-ui
+            <a href="http://127.0.0.1:48123/console" target="_blank" rel="noopener noreferrer">
+              http://127.0.0.1:48123/console
             </a>
           </p>
           <p class="hint">Click the link to open the backend test UI in a new browser tab.</p>

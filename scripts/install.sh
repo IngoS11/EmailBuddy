@@ -90,7 +90,7 @@ main() {
 
   info "Install complete. Next steps:"
   echo "  1) Start companion: npm run dev"
-  echo "  2) Open test UI: http://127.0.0.1:48123/test-ui"
+  echo "  2) Open companion console: http://127.0.0.1:48123/console"
   echo "  3) Load Chrome extension from apps/extension/src"
 }
 

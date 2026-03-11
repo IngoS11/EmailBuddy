@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EmailBuddy Companion</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <style>
       :root {
         --bg: #f6f1e9;
@@ -166,6 +167,21 @@
         gap: 6px;
         flex: 1 1 240px;
         min-width: 220px;
+      }
+
+      .model-select-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .model-select-row select {
+        flex: 1 1 auto;
+      }
+
+      .reload-model-btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
       }
 
       .field > label {
@@ -354,7 +370,10 @@
             </div>
             <div class="field">
               <label for="remote-ollama-model">Model</label>
-              <select id="remote-ollama-model"></select>
+              <div class="model-select-row">
+                <select id="remote-ollama-model"></select>
+                <button id="reload-remote-ollama-models" class="secondary reload-model-btn" type="button">Reload</button>
+              </div>
               <p id="remote-ollama-model-hint" class="hint"></p>
             </div>
           </div>
@@ -367,7 +386,10 @@
             </div>
             <div class="field">
               <label for="local-ollama-model">Model</label>
-              <select id="local-ollama-model"></select>
+              <div class="model-select-row">
+                <select id="local-ollama-model"></select>
+                <button id="reload-local-ollama-models" class="secondary reload-model-btn" type="button">Reload</button>
+              </div>
               <p id="local-ollama-model-hint" class="hint"></p>
             </div>
           </div>
@@ -378,7 +400,10 @@
           <div class="row">
             <div class="field">
               <label for="openai-model">Model</label>
-              <select id="openai-model"></select>
+              <div class="model-select-row">
+                <select id="openai-model"></select>
+                <button id="reload-openai-models" class="secondary reload-model-btn" type="button">Reload</button>
+              </div>
             </div>
           </div>
           <div class="row">
@@ -393,7 +418,10 @@
           <div class="row">
             <div class="field">
               <label for="anthropic-model">Model</label>
-              <select id="anthropic-model"></select>
+              <div class="model-select-row">
+                <select id="anthropic-model"></select>
+                <button id="reload-anthropic-models" class="secondary reload-model-btn" type="button">Reload</button>
+              </div>
             </div>
           </div>
           <div class="row">
@@ -456,11 +484,15 @@
       const anthropicKeyEl = document.getElementById('anthropic-key');
       const openaiModelEl = document.getElementById('openai-model');
       const anthropicModelEl = document.getElementById('anthropic-model');
+      const reloadOpenAiModelsBtn = document.getElementById('reload-openai-models');
+      const reloadAnthropicModelsBtn = document.getElementById('reload-anthropic-models');
       const remoteOllamaUrlEl = document.getElementById('remote-ollama-url');
       const remoteOllamaModelEl = document.getElementById('remote-ollama-model');
+      const reloadRemoteOllamaModelsBtn = document.getElementById('reload-remote-ollama-models');
       const remoteOllamaModelHintEl = document.getElementById('remote-ollama-model-hint');
       const localOllamaUrlEl = document.getElementById('local-ollama-url');
       const localOllamaModelEl = document.getElementById('local-ollama-model');
+      const reloadLocalOllamaModelsBtn = document.getElementById('reload-local-ollama-models');
       const localOllamaModelHintEl = document.getElementById('local-ollama-model-hint');
       const filterOllamaModelsEl = document.getElementById('filter-ollama-models');
       const saveOpenAiBtn = document.getElementById('save-openai');
@@ -474,11 +506,18 @@
       let enabledOrder = [];
       let disabledOrder = [];
       let draggingEnabledId = null;
+      let reloadingModelCatalog = false;
       let modelCatalog = {
         cloud: { openai: [], anthropic: [] },
         ollama: {}
       };
       let hideNonChatOllamaModels = false;
+      const modelReloadButtons = [
+        reloadRemoteOllamaModelsBtn,
+        reloadLocalOllamaModelsBtn,
+        reloadOpenAiModelsBtn,
+        reloadAnthropicModelsBtn
+      ].filter(Boolean);
 
       function isLikelyNonChatOllamaModel(model) {
         const value = String(model ?? '').trim().toLowerCase();
@@ -510,6 +549,13 @@
         el.classList.remove('ok', 'error');
         if (type === 'ok') el.classList.add('ok');
         if (type === 'error') el.classList.add('error');
+      }
+
+      function syncModelReloadButtonsState() {
+        for (const button of modelReloadButtons) {
+          button.disabled = reloadingModelCatalog;
+          button.textContent = reloadingModelCatalog ? 'Reloading...' : 'Reload';
+        }
       }
 
       function activateTabGroup(tabs, panels, tabId) {
@@ -724,25 +770,13 @@
           for (const model of normalizedModels) {
             appendOption(selectEl, model, model);
           }
-          if (hasConfigured) {
-            selectEl.value = configuredModel;
-          } else if (configuredModel) {
-            appendOption(selectEl, configuredModel, `${configuredModel} (current)`);
-            selectEl.value = configuredModel;
-          } else {
-            selectEl.value = normalizedModels[0];
-          }
+          selectEl.value = hasConfigured ? configuredModel : normalizedModels[0];
           hintEl.textContent = buildOllamaHint(ok, error, hiddenCount);
           return;
         }
 
-        if (configuredModel) {
-          appendOption(selectEl, configuredModel, `${configuredModel} (current)`);
-          selectEl.value = configuredModel;
-        } else {
-          appendOption(selectEl, '', 'No models available');
-          selectEl.value = '';
-        }
+        appendOption(selectEl, '', 'No models available');
+        selectEl.value = '';
         const baseHint = error ? `Model discovery unavailable: ${error}` : 'Model discovery unavailable.';
         const hiddenHint = hiddenCount > 0 ? `${hiddenCount} likely non-chat model${hiddenCount === 1 ? '' : 's'} hidden.` : '';
         hintEl.textContent = hiddenHint ? `${baseHint} ${hiddenHint}` : baseHint;
@@ -899,6 +933,7 @@
           const body = await res.json();
           if (!res.ok) throw new Error(body.error || 'Could not load models');
           modelCatalog = body;
+          return true;
         } catch {
           modelCatalog = {
             cloud: {
@@ -907,6 +942,27 @@
             },
             ollama: {}
           };
+          return false;
+        }
+      }
+
+      async function reloadModelCatalogFromUi() {
+        if (reloadingModelCatalog) return;
+
+        reloadingModelCatalog = true;
+        syncModelReloadButtonsState();
+        setStatus(configStatusEl, 'Reloading model lists...');
+        try {
+          const ok = await loadModels();
+          applyModelCatalogToForms();
+          if (ok) {
+            setStatus(configStatusEl, 'Model lists reloaded.', 'ok');
+            return;
+          }
+          setStatus(configStatusEl, 'Model reload failed; using fallback model list.', 'error');
+        } finally {
+          reloadingModelCatalog = false;
+          syncModelReloadButtonsState();
         }
       }
 
@@ -1060,6 +1116,9 @@
 
       saveConfigBtn.addEventListener('click', saveConfig);
       saveStyleBtn.addEventListener('click', saveStyleMarkdown);
+      for (const button of modelReloadButtons) {
+        button.addEventListener('click', reloadModelCatalogFromUi);
+      }
 
       saveOpenAiBtn.addEventListener('click', async () => {
         const value = openaiKeyEl.value.trim();
@@ -1125,6 +1184,7 @@
 
       loadOllamaFilterPreference();
       bindOllamaFilterToggle();
+      syncModelReloadButtonsState();
 
       Promise.all([loadSettings(), refreshSecretsStatus(), loadStyleMarkdown()]).catch((error) => {
         setStatus(configStatusEl, error.message, 'error');

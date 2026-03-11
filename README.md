@@ -86,9 +86,9 @@ Markdown rules override learned profile traits.
 ```bash
 npm run dev
 ```
-- Open test UI:
+- Open companion console:
 ```bash
-http://127.0.0.1:48123/test-ui
+http://127.0.0.1:48123/console
 ```
 - Use tabs in the page to test rewrites, edit runtime settings, and modify `STYLE.md`.
 

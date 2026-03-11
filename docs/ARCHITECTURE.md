@@ -36,7 +36,7 @@ The extension handles keyboard-triggered rewrite actions and text selection in G
 - **On configured keyboard shortcut**: one rewrite API call.
 - No background polling is used.
 - Extension options UI reads/writes backend settings through companion config/secrets endpoints.
-- Companion `/test-ui` also edits the same config, making companion the single source of truth.
+- Companion `/console` also edits the same config, making companion the single source of truth.
 
 ## Performance Notes
 No DOM observers are used in the extension runtime path, so Gmail compose performance is not impacted by continuous mutation handling.

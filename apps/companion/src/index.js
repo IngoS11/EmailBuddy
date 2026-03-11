@@ -34,7 +34,8 @@ function log(level, event, details = {}) {
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const testUiPath = path.join(__dirname, 'static', 'test-ui.html');
+const companionConsolePath = path.join(__dirname, 'static', 'companion-console.html');
+const extensionIconPath = path.join(__dirname, '..', '..', 'extension', 'src', 'icons', 'emailbuddy-icon.svg');
 let requestCounter = 0;
 
 function nextRequestId() {
@@ -73,8 +74,20 @@ async function handler(req, res) {
   const url = new URL(req.url, 'http://localhost');
 
   try {
-    if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/test-ui')) {
-      const html = await readFile(testUiPath, 'utf8');
+    if (req.method === 'GET' && url.pathname === '/favicon.svg') {
+      const icon = await readFile(extensionIconPath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'image/svg+xml; charset=utf-8' });
+      res.end(icon);
+      log('info', 'http.request.end', {
+        requestId,
+        status: 200,
+        durationMs: Date.now() - startedAt
+      });
+      return;
+    }
+
+    if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/console')) {
+      const html = await readFile(companionConsolePath, 'utf8');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(html);
       log('info', 'http.request.end', {
@@ -308,5 +321,5 @@ const server = http.createServer(handler);
 
 server.listen(config.port, config.host, () => {
   log('info', 'server.started', { host: config.host, port: config.port });
-  log('info', 'server.test_ui', { url: `http://${config.host}:${config.port}/test-ui` });
+  log('info', 'server.console_ui', { url: `http://${config.host}:${config.port}/console` });
 });

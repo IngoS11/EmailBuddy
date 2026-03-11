@@ -152,6 +152,21 @@ h1, h2, h3 {
   min-width: 220px;
 }
 
+.model-select-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.model-select-row select {
+  flex: 1 1 auto;
+}
+
+.reload-model-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .providers {
   list-style: none;
   padding: 0;
