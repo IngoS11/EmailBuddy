@@ -28,6 +28,7 @@ export async function rewriteEmail(request, deps = {}) {
   });
 
   const rulesPrompt = styleRulesToPrompt(mergedRules);
+  const systemPromptTemplate = config?.prompts?.rewriteSystemTemplate;
   const attempts = [];
   const endpointById = new Map((config.endpoints ?? []).map((endpoint) => [endpoint.id, endpoint]));
   const executionOrder = buildExecutionOrder(config);
@@ -65,6 +66,7 @@ export async function rewriteEmail(request, deps = {}) {
         text: request.text,
         mode,
         rulesPrompt,
+        systemPromptTemplate,
         timeoutMs,
         endpointConfig: endpoint.config
       });

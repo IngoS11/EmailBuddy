@@ -13,7 +13,19 @@
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
+.emailbuddy-toast.theme-dark {
+  border-color: #4d5e7c;
+  background: #22324a;
+  color: #ecf3ff;
+}
+
 .emailbuddy-toast.error {
   border-color: #d19ca3;
   background: #fce8e6;
+}
+
+.emailbuddy-toast.theme-dark.error {
+  border-color: #8a585f;
+  background: #4c2b30;
+  color: #ffe8eb;
 }

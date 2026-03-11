@@ -2,6 +2,8 @@
   --bg: #f6f1e9;
   --bg-soft: #efe7dc;
   --card: #fffdf8;
+  --surface: #ffffff;
+  --surface-soft: #f6efe4;
   --ink: #2e241b;
   --muted: #705f51;
   --line: #d8c8b8;
@@ -12,6 +14,21 @@
   --shadow: 0 10px 30px rgba(38, 23, 6, 0.08);
 }
 
+:root[data-theme="dark"] {
+  --bg: #1a1b1f;
+  --bg-soft: #252832;
+  --card: #1f2330;
+  --surface: #2a3040;
+  --surface-soft: #323949;
+  --ink: #ebeef7;
+  --muted: #b8bfd2;
+  --line: #414a60;
+  --accent: #67a9ce;
+  --danger: #e38e84;
+  --ok: #87c999;
+  --shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+}
+
 * { box-sizing: border-box; }
 
 body {
@@ -19,6 +36,7 @@ body {
   color: var(--ink);
   background: var(--bg);
   font-family: "Avenir Next", "Segoe UI", sans-serif;
+  color-scheme: light dark;
 }
 
 .shell {
@@ -69,7 +87,7 @@ h1, h2, h3 {
 }
 
 .tab[aria-selected="true"] {
-  background: #fff;
+  background: var(--surface);
   color: var(--ink);
   box-shadow: 0 3px 10px rgba(58, 42, 27, 0.13);
 }
@@ -102,7 +120,7 @@ h1, h2, h3 {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 12px;
-  background: #fff;
+  background: var(--surface);
   display: grid;
   gap: 10px;
 }
@@ -186,7 +204,7 @@ h1, h2, h3 {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 8px 10px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .provider-item.dragging {
@@ -235,7 +253,7 @@ input[type="password"] {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 9px 11px;
-  background: #fff;
+  background: var(--surface);
   color: var(--ink);
   font: inherit;
 }
@@ -270,7 +288,7 @@ button:hover:not(:disabled) {
 }
 
 .secondary {
-  background: #f6efe4;
+  background: var(--surface-soft);
 }
 
 button:disabled,

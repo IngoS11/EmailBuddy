@@ -11,8 +11,10 @@ import {
   writeJson
 } from './file-utils.js';
 import { ANTHROPIC_MODELS, OPENAI_MODELS } from './models.js';
+import { DEFAULT_REWRITE_SYSTEM_TEMPLATE, MAX_REWRITE_SYSTEM_TEMPLATE_LENGTH } from './prompt-template.js';
 
 export const ALLOWED_ENDPOINT_TYPES = ['ollama', 'openai', 'anthropic'];
+export const ALLOWED_THEMES = ['light', 'dark', 'system'];
 const LEGACY_ALLOWED_PROVIDERS = ['ollama', 'openai', 'anthropic'];
 
 const DEFAULT_ENDPOINTS = [
@@ -22,7 +24,8 @@ const DEFAULT_ENDPOINTS = [
     label: 'Remote Ollama',
     config: {
       baseUrl: '',
-      model: 'llama3.1:8b'
+      model: 'llama3.1:8b',
+      injectSystemPrompt: true
     }
   },
   {
@@ -47,7 +50,8 @@ const DEFAULT_ENDPOINTS = [
     label: 'Local Ollama',
     config: {
       baseUrl: 'http://127.0.0.1:11434',
-      model: 'llama3.1:8b'
+      model: 'llama3.1:8b',
+      injectSystemPrompt: true
     }
   }
 ];
@@ -71,6 +75,12 @@ export const CONFIG_SCHEMA = {
     history: {
       enabled: false
     },
+    appearance: {
+      theme: 'system'
+    },
+    prompts: {
+      rewriteSystemTemplate: DEFAULT_REWRITE_SYSTEM_TEMPLATE
+    },
     timeoutMs: 36000
   },
   constraints: {
@@ -83,6 +93,12 @@ export const CONFIG_SCHEMA = {
       max: 65535
     },
     endpointTypes: ALLOWED_ENDPOINT_TYPES,
+    appearance: {
+      theme: ALLOWED_THEMES
+    },
+    prompts: {
+      rewriteSystemTemplateMaxLength: MAX_REWRITE_SYSTEM_TEMPLATE_LENGTH
+    },
     models: {
       openai: OPENAI_MODELS,
       anthropic: ANTHROPIC_MODELS
@@ -186,7 +202,8 @@ function normalizeEndpointConfig(type, config) {
   if (type === 'ollama') {
     return {
       baseUrl: normalizeBaseUrl(value.baseUrl),
-      model: String(value.model ?? '').trim()
+      model: String(value.model ?? '').trim(),
+      injectSystemPrompt: value.injectSystemPrompt === false ? false : true
     };
   }
 
@@ -341,6 +358,36 @@ function normalizeHistory(history) {
   return { enabled: history.enabled };
 }
 
+function normalizeAppearance(appearance) {
+  if (typeof appearance !== 'object' || appearance === null) {
+    throw new Error('appearance must be an object');
+  }
+
+  const theme = String(appearance.theme ?? '').trim().toLowerCase();
+  if (!ALLOWED_THEMES.includes(theme)) {
+    throw new Error(`appearance.theme must be one of: ${ALLOWED_THEMES.join(', ')}`);
+  }
+
+  return { theme };
+}
+
+function normalizePrompts(prompts) {
+  const value = typeof prompts === 'object' && prompts !== null ? prompts : {};
+  const rewriteSystemTemplate = String(
+    value.rewriteSystemTemplate ?? DEFAULT_REWRITE_SYSTEM_TEMPLATE
+  ).trim();
+  if (!rewriteSystemTemplate) {
+    throw new Error('prompts.rewriteSystemTemplate must be a non-empty string');
+  }
+  if (rewriteSystemTemplate.length > MAX_REWRITE_SYSTEM_TEMPLATE_LENGTH) {
+    throw new Error(
+      `prompts.rewriteSystemTemplate must be at most ${MAX_REWRITE_SYSTEM_TEMPLATE_LENGTH} characters`
+    );
+  }
+
+  return { rewriteSystemTemplate };
+}
+
 function resolveRoutingFromLegacy(config, endpoints) {
   const endpointIds = new Set(endpoints.map((endpoint) => endpoint.id));
 
@@ -427,6 +474,8 @@ export function validateConfig(config) {
     endpoints,
     routing,
     history: normalizeHistory(config.history),
+    appearance: normalizeAppearance(config.appearance),
+    prompts: normalizePrompts(config.prompts),
     timeoutMs: normalizeTimeout(config.timeoutMs)
   };
 }
@@ -475,6 +524,14 @@ function mergeConfig(baseConfig, patchConfig) {
     history: {
       ...baseConfig.history,
       ...(patchConfig.history ?? {})
+    },
+    appearance: {
+      ...baseConfig.appearance,
+      ...(patchConfig.appearance ?? {})
+    },
+    prompts: {
+      ...baseConfig.prompts,
+      ...(patchConfig.prompts ?? {})
     },
     routing: {
       ...(baseConfig.routing ?? {}),

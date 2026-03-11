@@ -41,12 +41,6 @@ security add-generic-password -U -a anthropic_api_key -s emailbuddy -w '<ANTHROP
 ollama serve
 ollama pull llama3.1:8b
 ```
-## Optional: Custom Ollama Modelfile
-Using a custom Ollama Modelfile is optional. EmailBuddy works with standard pulled models (for example `llama3.1:8b`) out of the box.
-
-If you want to customize model behavior, you can use the repository's example Modelfile:
-- [Modelfile](./Modelfile)
-
 4. Load extension in Chrome:
 - Open `chrome://extensions`
 - Enable Developer Mode
@@ -58,21 +52,31 @@ If you want to customize model behavior, you can use the repository's example Mo
   - Click **Record shortcut** and press your preferred key combination
   - Use the same page to edit backend config (provider order, timeout, history, API keys)
 
+## Optional: Custom Ollama Modelfile
+Using a custom Ollama Modelfile is optional. EmailBuddy works with standard pulled models (for example `llama3.1:8b`) out of the box.
+
+If you want to customize model behavior, you can use the repository's example Modelfile:
+- [Modelfile](./Modelfile)
+
+If you disable `injectSystemPrompt` for an Ollama endpoint, your Modelfile/system prompt instructions become the primary rewrite guidance for that endpoint.
+
 ## Global macOS Shortcut (Hammerspoon)
 For global usage outside Gmail/Chrome, use Hammerspoon to send selected text to EmailBuddy Companion and replace it in place.
 
 - Setup guide: [docs/HAMMERSPOON.md](docs/HAMMERSPOON.md)
 - Ready-to-copy script: [docs/hammerspoon-emailbuddy.lua](docs/hammerspoon-emailbuddy.lua)
 
-## Style Configuration
-Edit `~/.emailbuddy/STYLE.md` to define mode behavior:
+## Configuration
 
-```md
-## mode: casual
-do: sound warm and collaborative
-avoid: stiff wording
-```
-Markdown rules override learned profile traits.
+Detailed configuration reference:
+- [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
+
+This includes:
+- `config.json` runtime options (`endpoints`, `routing`, `timeoutMs`, `history`, `appearance`)
+- Ollama-specific options, including `injectSystemPrompt`
+- System prompt template configuration (`Settings` -> `Prompt` in Companion Console)
+- `STYLE.md` format and profile behavior
+- API-key/keychain setup and config endpoints
 
 ## API
 - `POST /v1/rewrite`
@@ -87,7 +91,6 @@ Markdown rules override learned profile traits.
 
 ## Debugging and Test UI
 - Companion logs now print JSON lines with request IDs, durations, and provider attempt outcomes.
-- Default enabled model order is `openai -> anthropic -> local-ollama`; `remote-ollama` starts disabled until configured.
 - Start the companion:
 ```bash
 npm run dev

@@ -9,6 +9,7 @@ do: be concise
 `;
 
 test('rewriteEmail falls back to later provider when first fails', async () => {
+  let receivedSystemPromptTemplate = '';
   const providerRegistry = {
     openai: {
       async rewrite() {
@@ -16,7 +17,8 @@ test('rewriteEmail falls back to later provider when first fails', async () => {
       }
     },
     anthropic: {
-      async rewrite({ text }) {
+      async rewrite({ text, systemPromptTemplate }) {
+        receivedSystemPromptTemplate = systemPromptTemplate;
         return `rewritten:${text}`;
       }
     }
@@ -40,7 +42,11 @@ test('rewriteEmail falls back to later provider when first fails', async () => {
           disabled: []
         },
         timeoutMs: 100,
-        history: { enabled: false }
+        history: { enabled: false },
+        appearance: { theme: 'system' },
+        prompts: {
+          rewriteSystemTemplate: 'Mode={{mode}}\nRules={{rulesPrompt}}'
+        }
       },
       styleMarkdown,
       profile: null,
@@ -55,4 +61,5 @@ test('rewriteEmail falls back to later provider when first fails', async () => {
   assert.equal(result.appliedMode, 'casual');
   assert.equal(result.notes.length, 1);
   assert.match(result.notes[0], /openai: simulated outage/);
+  assert.equal(receivedSystemPromptTemplate, 'Mode={{mode}}\nRules={{rulesPrompt}}');
 });

@@ -2,6 +2,8 @@ const SHORTCUT_KEY = 'shortcut';
 const DEFAULT_SHORTCUT = 'Meta+Shift+E';
 const API_BASE = 'http://127.0.0.1:48123';
 const HIDE_NON_CHAT_OLLAMA_MODELS_KEY = 'emailbuddy.hideNonChatOllamaModels';
+const THEME_PREFERENCE_KEY = 'emailbuddy.themePreference';
+const THEME_SYNC_INTERVAL_MS = 30000;
 
 const topTabs = ['tab-shortcut', 'tab-backend', 'tab-test']
   .map((id) => document.getElementById(id))
@@ -37,10 +39,12 @@ const remoteOllamaUrlEl = document.getElementById('remote-ollama-url');
 const remoteOllamaModelEl = document.getElementById('remote-ollama-model');
 const reloadRemoteOllamaModelsBtn = document.getElementById('reload-remote-ollama-models');
 const remoteOllamaModelHintEl = document.getElementById('remote-ollama-model-hint');
+const remoteOllamaInjectSystemPromptEl = document.getElementById('remote-ollama-inject-system-prompt');
 const localOllamaUrlEl = document.getElementById('local-ollama-url');
 const localOllamaModelEl = document.getElementById('local-ollama-model');
 const reloadLocalOllamaModelsBtn = document.getElementById('reload-local-ollama-models');
 const localOllamaModelHintEl = document.getElementById('local-ollama-model-hint');
+const localOllamaInjectSystemPromptEl = document.getElementById('local-ollama-inject-system-prompt');
 const filterOllamaModelsEl = document.getElementById('filter-ollama-models');
 const saveOpenAiBtn = document.getElementById('save-openai');
 const saveAnthropicBtn = document.getElementById('save-anthropic');
@@ -58,12 +62,95 @@ let modelCatalog = {
   ollama: {}
 };
 let hideNonChatOllamaModels = false;
+let themePreference = 'system';
+let themeSyncIntervalId = null;
+const prefersDarkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 const modelReloadButtons = [
   reloadRemoteOllamaModelsBtn,
   reloadLocalOllamaModelsBtn,
   reloadOpenAiModelsBtn,
   reloadAnthropicModelsBtn
 ].filter(Boolean);
+
+function normalizeThemePreference(theme) {
+  const value = String(theme ?? '').trim().toLowerCase();
+  if (value === 'light' || value === 'dark' || value === 'system') {
+    return value;
+  }
+  return 'system';
+}
+
+function resolveEffectiveTheme(theme) {
+  if (theme === 'light' || theme === 'dark') {
+    return theme;
+  }
+  return prefersDarkMediaQuery.matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+  themePreference = normalizeThemePreference(theme);
+  document.documentElement.dataset.theme = resolveEffectiveTheme(themePreference);
+}
+
+async function cacheThemePreference(theme) {
+  try {
+    await chrome.storage.local.set({ [THEME_PREFERENCE_KEY]: normalizeThemePreference(theme) });
+  } catch {
+    // Ignore extension storage errors and keep in-memory state.
+  }
+}
+
+async function loadCachedThemePreference() {
+  try {
+    const stored = await chrome.storage.local.get([THEME_PREFERENCE_KEY]);
+    return normalizeThemePreference(stored[THEME_PREFERENCE_KEY]);
+  } catch {
+    return 'system';
+  }
+}
+
+async function syncThemeFromBackend({ silent = true } = {}) {
+  try {
+    const config = await callApi('/v1/config');
+    const nextTheme = normalizeThemePreference(config?.appearance?.theme);
+    applyTheme(nextTheme);
+    await cacheThemePreference(nextTheme);
+  } catch (error) {
+    const fallbackTheme = await loadCachedThemePreference();
+    applyTheme(fallbackTheme);
+    if (!silent) {
+      setStatus(connectionEl, `Companion unreachable: ${error.message}`, 'error');
+    }
+  }
+}
+
+function startThemeSync() {
+  if (themeSyncIntervalId !== null) {
+    clearInterval(themeSyncIntervalId);
+  }
+
+  themeSyncIntervalId = window.setInterval(() => {
+    syncThemeFromBackend().catch(() => {});
+  }, THEME_SYNC_INTERVAL_MS);
+}
+
+function bindSystemThemeListener() {
+  const onSystemThemeChanged = () => {
+    if (themePreference !== 'system') {
+      return;
+    }
+    applyTheme('system');
+  };
+
+  if (typeof prefersDarkMediaQuery.addEventListener === 'function') {
+    prefersDarkMediaQuery.addEventListener('change', onSystemThemeChanged);
+    return;
+  }
+
+  if (typeof prefersDarkMediaQuery.addListener === 'function') {
+    prefersDarkMediaQuery.addListener(onSystemThemeChanged);
+  }
+}
 
 function isLikelyNonChatOllamaModel(model) {
   const value = String(model ?? '').trim().toLowerCase();
@@ -211,9 +298,11 @@ function setBackendEnabled(enabled) {
     reloadAnthropicModelsBtn,
     remoteOllamaUrlEl,
     remoteOllamaModelEl,
+    remoteOllamaInjectSystemPromptEl,
     reloadRemoteOllamaModelsBtn,
     localOllamaUrlEl,
     localOllamaModelEl,
+    localOllamaInjectSystemPromptEl,
     reloadLocalOllamaModelsBtn,
     filterOllamaModelsEl,
     saveOpenAiBtn,
@@ -496,10 +585,12 @@ function syncEndpointFormFields() {
 
   if (remote) {
     remoteOllamaUrlEl.value = remote.config?.baseUrl ?? '';
+    remoteOllamaInjectSystemPromptEl.checked = remote.config?.injectSystemPrompt !== false;
   }
 
   if (local) {
     localOllamaUrlEl.value = local.config?.baseUrl ?? '';
+    localOllamaInjectSystemPromptEl.checked = local.config?.injectSystemPrompt !== false;
   }
 
   applyModelCatalogToForms();
@@ -520,7 +611,8 @@ function collectEndpointsForSave() {
     config: {
       ...remote.config,
       baseUrl: remoteOllamaUrlEl.value.trim(),
-      model: getSelectedOllamaModel(remoteOllamaModelEl)
+      model: getSelectedOllamaModel(remoteOllamaModelEl),
+      injectSystemPrompt: remoteOllamaInjectSystemPromptEl.checked
     }
   });
 
@@ -529,7 +621,8 @@ function collectEndpointsForSave() {
     config: {
       ...local.config,
       baseUrl: localOllamaUrlEl.value.trim(),
-      model: getSelectedOllamaModel(localOllamaModelEl)
+      model: getSelectedOllamaModel(localOllamaModelEl),
+      injectSystemPrompt: localOllamaInjectSystemPromptEl.checked
     }
   });
 
@@ -651,6 +744,9 @@ async function refreshBackendState() {
     timeoutEl.max = String(schema.constraints.timeoutMs.max);
     timeoutEl.value = String(config.timeoutMs);
     historyModeEl.value = config.history.enabled ? 'enabled' : 'disabled';
+    const nextTheme = normalizeThemePreference(config?.appearance?.theme);
+    applyTheme(nextTheme);
+    await cacheThemePreference(nextTheme);
 
     syncEndpointFormFields();
     renderModelLists();
@@ -662,6 +758,8 @@ async function refreshBackendState() {
     );
   } catch (error) {
     backendConnected = false;
+    const fallbackTheme = await loadCachedThemePreference();
+    applyTheme(fallbackTheme);
     setStatus(connectionEl, `Companion unreachable: ${error.message}`, 'error');
     setStatus(backendStatusEl, 'Backend settings unavailable until companion is running.', 'error');
   }
@@ -864,10 +962,27 @@ for (const button of modelReloadButtons) {
   button.addEventListener('click', reloadModelCatalogFromUi);
 }
 
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local' || !changes[THEME_PREFERENCE_KEY]) {
+    return;
+  }
+
+  applyTheme(changes[THEME_PREFERENCE_KEY].newValue);
+});
+
 loadOllamaFilterPreference();
 bindOllamaFilterToggle();
+bindSystemThemeListener();
 
-Promise.all([renderCurrentShortcut(), refreshBackendState()]).catch((error) => {
+Promise.all([
+  renderCurrentShortcut(),
+  (async () => {
+    applyTheme(await loadCachedThemePreference());
+    await refreshBackendState();
+    await syncThemeFromBackend();
+    startThemeSync();
+  })()
+]).catch((error) => {
   setStatus(shortcutStatusEl, error.message, 'error');
 });
 

@@ -10,6 +10,8 @@
         --bg: #f6f1e9;
         --bg-soft: #efe7dc;
         --card: #fffdf8;
+        --surface: #ffffff;
+        --surface-soft: #f6efe4;
         --ink: #2e241b;
         --muted: #705f51;
         --line: #d8c8b8;
@@ -21,6 +23,22 @@
         --shadow: 0 10px 30px rgba(38, 23, 6, 0.08);
       }
 
+      :root[data-theme="dark"] {
+        --bg: #1a1b1f;
+        --bg-soft: #252832;
+        --card: #1f2330;
+        --surface: #2a3040;
+        --surface-soft: #323949;
+        --ink: #ebeef7;
+        --muted: #b8bfd2;
+        --line: #414a60;
+        --accent: #67a9ce;
+        --accent-2: #73b087;
+        --danger: #e38e84;
+        --ok: #87c999;
+        --shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+      }
+
       * { box-sizing: border-box; }
 
       body {
@@ -28,6 +46,7 @@
         color: var(--ink);
         background: var(--bg);
         font-family: "Avenir Next", "Segoe UI", sans-serif;
+        color-scheme: light dark;
       }
 
       .shell {
@@ -77,7 +96,7 @@
       }
 
       .tab[aria-selected="true"] {
-        background: #fff;
+        background: var(--surface);
         color: var(--ink);
         box-shadow: 0 3px 10px rgba(58, 42, 27, 0.13);
       }
@@ -121,7 +140,7 @@
         border: 1px solid var(--line);
         border-radius: 10px;
         padding: 9px 11px;
-        background: #fff;
+        background: var(--surface);
         color: var(--ink);
         font: inherit;
       }
@@ -200,7 +219,7 @@
       }
 
       .primary { background: var(--accent); color: #fff; border-color: transparent; }
-      .secondary { background: #f6efe4; }
+      .secondary { background: var(--surface-soft); }
 
       .status {
         min-height: 20px;
@@ -226,7 +245,7 @@
         border: 1px solid var(--line);
         border-radius: 10px;
         padding: 8px 10px;
-        background: #fff;
+        background: var(--surface);
       }
 
       .provider-item.dragging {
@@ -328,6 +347,7 @@
           <button id="tab-model-order" class="tab" role="tab" aria-controls="panel-model-order" aria-selected="true" tabindex="0">Model Order</button>
           <button id="tab-ollama" class="tab" role="tab" aria-controls="panel-ollama" aria-selected="false" tabindex="-1">Ollama</button>
           <button id="tab-cloud-apis" class="tab" role="tab" aria-controls="panel-cloud-apis" aria-selected="false" tabindex="-1">Cloud APIs</button>
+          <button id="tab-prompt" class="tab" role="tab" aria-controls="panel-prompt" aria-selected="false" tabindex="-1">Prompt</button>
         </div>
 
         <section id="panel-model-order" class="subpanel" role="tabpanel" aria-labelledby="tab-model-order">
@@ -349,6 +369,14 @@
               <select id="history-mode">
                 <option value="disabled">Disabled</option>
                 <option value="enabled">Enabled</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="appearance-theme">Theme</label>
+              <select id="appearance-theme">
+                <option value="system">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
               </select>
             </div>
           </div>
@@ -377,6 +405,12 @@
               <p id="remote-ollama-model-hint" class="hint"></p>
             </div>
           </div>
+          <div class="row toggle-row">
+            <label class="inline-toggle" for="remote-ollama-inject-system-prompt">
+              <input id="remote-ollama-inject-system-prompt" type="checkbox" />
+              Inject EmailBuddy system prompt
+            </label>
+          </div>
 
           <h3>Local Ollama</h3>
           <div class="row ollama-row">
@@ -392,6 +426,12 @@
               </div>
               <p id="local-ollama-model-hint" class="hint"></p>
             </div>
+          </div>
+          <div class="row toggle-row">
+            <label class="inline-toggle" for="local-ollama-inject-system-prompt">
+              <input id="local-ollama-inject-system-prompt" type="checkbox" />
+              Inject EmailBuddy system prompt
+            </label>
           </div>
         </section>
 
@@ -433,6 +473,15 @@
           </div>
         </section>
 
+        <section id="panel-prompt" class="subpanel" role="tabpanel" aria-labelledby="tab-prompt" hidden>
+          <p class="hint">Template tokens: `{{mode}}` and `{{rulesPrompt}}`. Keep both to preserve mode and STYLE.md directives.</p>
+          <label for="rewrite-system-template">Rewrite system prompt template</label>
+          <textarea id="rewrite-system-template" spellcheck="false"></textarea>
+          <div class="row">
+            <button id="reset-rewrite-system-template" class="secondary" type="button">Reset to default</button>
+          </div>
+        </section>
+
         <div class="row">
           <button id="save-config" class="primary" type="button">Save config</button>
         </div>
@@ -460,10 +509,10 @@
       const topPanels = ['panel-rewrite', 'panel-settings', 'panel-style']
         .map((id) => document.getElementById(id))
         .filter(Boolean);
-      const settingsTabs = ['tab-model-order', 'tab-ollama', 'tab-cloud-apis']
+      const settingsTabs = ['tab-model-order', 'tab-ollama', 'tab-cloud-apis', 'tab-prompt']
         .map((id) => document.getElementById(id))
         .filter(Boolean);
-      const settingsPanels = ['panel-model-order', 'panel-ollama', 'panel-cloud-apis']
+      const settingsPanels = ['panel-model-order', 'panel-ollama', 'panel-cloud-apis', 'panel-prompt']
         .map((id) => document.getElementById(id))
         .filter(Boolean);
 
@@ -477,6 +526,7 @@
       const disabledListEl = document.getElementById('disabled-models');
       const timeoutEl = document.getElementById('timeout-ms');
       const historyModeEl = document.getElementById('history-mode');
+      const appearanceThemeEl = document.getElementById('appearance-theme');
       const saveConfigBtn = document.getElementById('save-config');
       const configStatusEl = document.getElementById('config-status');
 
@@ -490,13 +540,17 @@
       const remoteOllamaModelEl = document.getElementById('remote-ollama-model');
       const reloadRemoteOllamaModelsBtn = document.getElementById('reload-remote-ollama-models');
       const remoteOllamaModelHintEl = document.getElementById('remote-ollama-model-hint');
+      const remoteOllamaInjectSystemPromptEl = document.getElementById('remote-ollama-inject-system-prompt');
       const localOllamaUrlEl = document.getElementById('local-ollama-url');
       const localOllamaModelEl = document.getElementById('local-ollama-model');
       const reloadLocalOllamaModelsBtn = document.getElementById('reload-local-ollama-models');
       const localOllamaModelHintEl = document.getElementById('local-ollama-model-hint');
+      const localOllamaInjectSystemPromptEl = document.getElementById('local-ollama-inject-system-prompt');
       const filterOllamaModelsEl = document.getElementById('filter-ollama-models');
       const saveOpenAiBtn = document.getElementById('save-openai');
       const saveAnthropicBtn = document.getElementById('save-anthropic');
+      const rewriteSystemTemplateEl = document.getElementById('rewrite-system-template');
+      const resetRewriteSystemTemplateBtn = document.getElementById('reset-rewrite-system-template');
       const secretsStatusEl = document.getElementById('secrets-status');
       const styleEditorEl = document.getElementById('style-editor');
       const saveStyleBtn = document.getElementById('save-style');
@@ -511,13 +565,37 @@
         cloud: { openai: [], anthropic: [] },
         ollama: {}
       };
+      let defaultRewriteSystemTemplate = '';
+      let appearanceTheme = 'system';
       let hideNonChatOllamaModels = false;
+      const prefersDarkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const modelReloadButtons = [
         reloadRemoteOllamaModelsBtn,
         reloadLocalOllamaModelsBtn,
         reloadOpenAiModelsBtn,
         reloadAnthropicModelsBtn
       ].filter(Boolean);
+
+      function normalizeThemePreference(theme) {
+        const value = String(theme ?? '').trim().toLowerCase();
+        if (value === 'light' || value === 'dark' || value === 'system') {
+          return value;
+        }
+        return 'system';
+      }
+
+      function resolveEffectiveTheme(theme) {
+        if (theme === 'light' || theme === 'dark') {
+          return theme;
+        }
+        return prefersDarkMediaQuery.matches ? 'dark' : 'light';
+      }
+
+      function applyTheme(theme) {
+        appearanceTheme = normalizeThemePreference(theme);
+        const effectiveTheme = resolveEffectiveTheme(appearanceTheme);
+        document.documentElement.dataset.theme = effectiveTheme;
+      }
 
       function isLikelyNonChatOllamaModel(model) {
         const value = String(model ?? '').trim().toLowerCase();
@@ -585,6 +663,23 @@
             activateTabGroup(tabs, panels, tabs[next].id);
           });
         });
+      }
+
+      function bindSystemThemeListener() {
+        const onSystemThemeChanged = () => {
+          if (appearanceTheme !== 'system') {
+            return;
+          }
+          applyTheme('system');
+        };
+
+        if (typeof prefersDarkMediaQuery.addEventListener === 'function') {
+          prefersDarkMediaQuery.addEventListener('change', onSystemThemeChanged);
+          return;
+        }
+        if (typeof prefersDarkMediaQuery.addListener === 'function') {
+          prefersDarkMediaQuery.addListener(onSystemThemeChanged);
+        }
       }
 
       bindTabs(topTabs, topPanels);
@@ -834,10 +929,12 @@
 
         if (remote) {
           remoteOllamaUrlEl.value = remote.config?.baseUrl ?? '';
+          remoteOllamaInjectSystemPromptEl.checked = remote.config?.injectSystemPrompt !== false;
         }
 
         if (local) {
           localOllamaUrlEl.value = local.config?.baseUrl ?? '';
+          localOllamaInjectSystemPromptEl.checked = local.config?.injectSystemPrompt !== false;
         }
 
         applyModelCatalogToForms();
@@ -858,7 +955,8 @@
           config: {
             ...remote.config,
             baseUrl: remoteOllamaUrlEl.value.trim(),
-            model: getSelectedOllamaModel(remoteOllamaModelEl)
+            model: getSelectedOllamaModel(remoteOllamaModelEl),
+            injectSystemPrompt: remoteOllamaInjectSystemPromptEl.checked
           }
         });
 
@@ -867,7 +965,8 @@
           config: {
             ...local.config,
             baseUrl: localOllamaUrlEl.value.trim(),
-            model: getSelectedOllamaModel(localOllamaModelEl)
+            model: getSelectedOllamaModel(localOllamaModelEl),
+            injectSystemPrompt: localOllamaInjectSystemPromptEl.checked
           }
         });
 
@@ -978,6 +1077,7 @@
         if (!schemaRes.ok) throw new Error(schemaBody.error || 'Could not load config schema');
 
         await loadModels();
+        defaultRewriteSystemTemplate = schemaBody?.defaults?.prompts?.rewriteSystemTemplate ?? '';
         endpointMap = new Map((configBody.endpoints ?? []).map((endpoint) => [endpoint.id, endpoint]));
         const routing = deriveRouting(configBody);
         enabledOrder = routing.enabled;
@@ -992,6 +1092,11 @@
         timeoutEl.max = String(schemaBody.constraints.timeoutMs.max);
         timeoutEl.value = String(configBody.timeoutMs);
         historyModeEl.value = configBody.history.enabled ? 'enabled' : 'disabled';
+        appearanceThemeEl.value = normalizeThemePreference(configBody?.appearance?.theme ?? appearanceThemeEl.value);
+        rewriteSystemTemplateEl.value = String(
+          configBody?.prompts?.rewriteSystemTemplate ?? defaultRewriteSystemTemplate
+        );
+        applyTheme(appearanceThemeEl.value);
         syncEndpointFormFields();
         renderModelLists();
       }
@@ -1007,6 +1112,10 @@
         saveConfigBtn.disabled = true;
         setStatus(configStatusEl, 'Saving config...');
         try {
+          const rewriteSystemTemplate = rewriteSystemTemplateEl.value.trim();
+          if (!rewriteSystemTemplate) {
+            throw new Error('Rewrite system prompt template cannot be empty.');
+          }
           const res = await fetch('/v1/config', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -1017,7 +1126,11 @@
                 disabled: disabledOrder
               },
               timeoutMs: Number(timeoutEl.value),
-              history: { enabled: historyModeEl.value === 'enabled' }
+              history: { enabled: historyModeEl.value === 'enabled' },
+              appearance: { theme: normalizeThemePreference(appearanceThemeEl.value) },
+              prompts: {
+                rewriteSystemTemplate
+              }
             })
           });
           const body = await res.json();
@@ -1036,6 +1149,11 @@
           }
           timeoutEl.value = String(body.timeoutMs);
           historyModeEl.value = body.history.enabled ? 'enabled' : 'disabled';
+          appearanceThemeEl.value = normalizeThemePreference(body?.appearance?.theme ?? appearanceThemeEl.value);
+          rewriteSystemTemplateEl.value = String(
+            body?.prompts?.rewriteSystemTemplate ?? rewriteSystemTemplate
+          );
+          applyTheme(appearanceThemeEl.value);
           syncEndpointFormFields();
           renderModelLists();
           setStatus(configStatusEl, 'Config saved.', 'ok');
@@ -1115,10 +1233,17 @@
       });
 
       saveConfigBtn.addEventListener('click', saveConfig);
+      resetRewriteSystemTemplateBtn.addEventListener('click', () => {
+        rewriteSystemTemplateEl.value = defaultRewriteSystemTemplate;
+        setStatus(configStatusEl, 'Reset rewrite system prompt template to default.');
+      });
       saveStyleBtn.addEventListener('click', saveStyleMarkdown);
       for (const button of modelReloadButtons) {
         button.addEventListener('click', reloadModelCatalogFromUi);
       }
+      appearanceThemeEl.addEventListener('change', () => {
+        applyTheme(appearanceThemeEl.value);
+      });
 
       saveOpenAiBtn.addEventListener('click', async () => {
         const value = openaiKeyEl.value.trim();
@@ -1184,6 +1309,8 @@
 
       loadOllamaFilterPreference();
       bindOllamaFilterToggle();
+      applyTheme('system');
+      bindSystemThemeListener();
       syncModelReloadButtonsState();
 
       Promise.all([loadSettings(), refreshSecretsStatus(), loadStyleMarkdown()]).catch((error) => {

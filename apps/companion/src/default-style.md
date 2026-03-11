@@ -2,7 +2,7 @@
 
 ## global
 
-do: keep language clear and natural for non-native English writer
+do: keep language clear and natural for the original email language
 avoid: overly formal phrases and corporate jargon
 signature_style: short and friendly closing
 do: output only the rewritten email body text
