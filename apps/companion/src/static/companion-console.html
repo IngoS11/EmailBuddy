@@ -64,12 +64,152 @@
       p { margin: 0; }
 
       .hero {
-        display: grid;
-        gap: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
         margin-bottom: 14px;
       }
 
       .hero p { color: var(--muted); }
+
+      .theme-switch {
+        --theme-segment-width: 44px;
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(3, var(--theme-segment-width));
+        align-items: center;
+        width: calc(var(--theme-segment-width) * 3 + 10px);
+        height: 50px;
+        padding: 5px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--bg-soft);
+        box-shadow: 0 16px 34px rgba(17, 30, 52, 0.2);
+        color: var(--muted);
+        transition: background-color 220ms ease, border-color 220ms ease, color 220ms ease;
+      }
+
+      .theme-switch:hover {
+        box-shadow: 0 16px 34px rgba(17, 30, 52, 0.2);
+      }
+
+      .theme-option {
+        position: relative;
+        z-index: 2;
+        width: var(--theme-segment-width);
+        height: 40px;
+        border: 0;
+        border-radius: 999px;
+        padding: 0;
+        display: grid;
+        place-items: center;
+        color: inherit;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .theme-option:hover:not(:disabled),
+      .theme-option:focus-visible {
+        transform: none;
+        box-shadow: none;
+      }
+
+      .theme-option:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .theme-switch.is-dark {
+        border-color: var(--line);
+        background: var(--bg-soft);
+        color: var(--muted);
+      }
+
+      .theme-icon {
+        width: 20px;
+        height: 20px;
+        transition: opacity 220ms ease, transform 220ms ease, color 220ms ease;
+      }
+
+      .theme-icon svg {
+        width: 100%;
+        height: 100%;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .theme-knob {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        width: var(--theme-segment-width);
+        height: 40px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 10px 24px rgba(47, 111, 143, 0.45);
+        display: grid;
+        place-items: center;
+        transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          box-shadow 240ms ease;
+      }
+
+      .theme-switch[data-active-theme="light"] .theme-knob { transform: translateX(0); }
+      .theme-switch[data-active-theme="dark"] .theme-knob { transform: translateX(var(--theme-segment-width)); }
+      .theme-switch[data-active-theme="system"] .theme-knob { transform: translateX(calc(var(--theme-segment-width) * 2)); }
+
+      .theme-knob-icon {
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        color: #ffffff;
+        opacity: 0;
+        transform: scale(0.8) rotate(-12deg);
+        transition: opacity 180ms ease, transform 220ms ease;
+      }
+
+      .theme-knob-icon svg {
+        width: 100%;
+        height: 100%;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .theme-icon-moon svg,
+      .theme-knob-icon-moon svg {
+        fill: currentColor;
+        stroke: none;
+      }
+
+      .theme-option.is-active .theme-icon {
+        opacity: 0;
+      }
+
+      .theme-switch[data-active-theme="light"] .theme-knob-icon-sun,
+      .theme-switch[data-active-theme="dark"] .theme-knob-icon-moon,
+      .theme-switch[data-active-theme="system"] .theme-knob-icon-system {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
 
       .tabs {
         display: inline-flex;
@@ -300,6 +440,7 @@
 
       @media (max-width: 760px) {
         .shell { padding: 0 12px 20px; }
+        .hero { align-items: flex-start; }
       }
     </style>
   </head>
@@ -307,15 +448,77 @@
     <main class="shell">
       <header class="hero">
         <h1>EmailBuddy Companion</h1>
+        <div id="theme-toggle" class="theme-switch" role="group" aria-label="Theme preference">
+          <button class="theme-option" type="button" data-theme-value="light" aria-pressed="false" title="Light theme">
+            <span class="theme-icon theme-icon-sun" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="12" y1="2.5" x2="12" y2="5.5"></line>
+                <line x1="12" y1="18.5" x2="12" y2="21.5"></line>
+                <line x1="2.5" y1="12" x2="5.5" y2="12"></line>
+                <line x1="18.5" y1="12" x2="21.5" y2="12"></line>
+                <line x1="5.2" y1="5.2" x2="7.4" y2="7.4"></line>
+                <line x1="16.6" y1="16.6" x2="18.8" y2="18.8"></line>
+                <line x1="5.2" y1="18.8" x2="7.4" y2="16.6"></line>
+                <line x1="16.6" y1="7.4" x2="18.8" y2="5.2"></line>
+              </svg>
+            </span>
+            <span class="sr-only">Light theme</span>
+          </button>
+          <button class="theme-option" type="button" data-theme-value="dark" aria-pressed="false" title="Dark theme">
+            <span class="theme-icon theme-icon-moon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z"></path>
+              </svg>
+            </span>
+            <span class="sr-only">Dark theme</span>
+          </button>
+          <button class="theme-option" type="button" data-theme-value="system" aria-pressed="false" title="System theme">
+            <span class="theme-icon theme-icon-system" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <rect x="3.5" y="4.5" width="17" height="12" rx="2"></rect>
+                <line x1="8.5" y1="20" x2="15.5" y2="20"></line>
+                <line x1="12" y1="16.5" x2="12" y2="20"></line>
+              </svg>
+            </span>
+            <span class="sr-only">System theme</span>
+          </button>
+          <span class="theme-knob" aria-hidden="true">
+            <span class="theme-knob-icon theme-knob-icon-sun">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="12" y1="2.5" x2="12" y2="5.5"></line>
+                <line x1="12" y1="18.5" x2="12" y2="21.5"></line>
+                <line x1="2.5" y1="12" x2="5.5" y2="12"></line>
+                <line x1="18.5" y1="12" x2="21.5" y2="12"></line>
+                <line x1="5.2" y1="5.2" x2="7.4" y2="7.4"></line>
+                <line x1="16.6" y1="16.6" x2="18.8" y2="18.8"></line>
+                <line x1="5.2" y1="18.8" x2="7.4" y2="16.6"></line>
+                <line x1="16.6" y1="7.4" x2="18.8" y2="5.2"></line>
+              </svg>
+            </span>
+            <span class="theme-knob-icon theme-knob-icon-system">
+              <svg viewBox="0 0 24 24">
+                <rect x="3.5" y="4.5" width="17" height="12" rx="2"></rect>
+                <line x1="8.5" y1="20" x2="15.5" y2="20"></line>
+                <line x1="12" y1="16.5" x2="12" y2="20"></line>
+              </svg>
+            </span>
+            <span class="theme-knob-icon theme-knob-icon-moon">
+              <svg viewBox="0 0 24 24">
+                <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z"></path>
+              </svg>
+            </span>
+          </span>
+        </div>
       </header>
 
       <div class="tabs" role="tablist" aria-label="Companion panels">
-        <button id="tab-rewrite" class="tab" role="tab" aria-controls="panel-rewrite" aria-selected="true" tabindex="0">Test</button>
-        <button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Settings</button>
-        <button id="tab-style" class="tab" role="tab" aria-controls="panel-style" aria-selected="false" tabindex="-1">Style</button>
+        <button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="true" tabindex="0">Settings</button>
+        <button id="tab-rewrite" class="tab" role="tab" aria-controls="panel-rewrite" aria-selected="false" tabindex="-1">Test</button>
       </div>
 
-      <section id="panel-rewrite" class="panel" role="tabpanel" aria-labelledby="tab-rewrite">
+      <section id="panel-rewrite" class="panel" role="tabpanel" aria-labelledby="tab-rewrite" hidden>
         <div class="row">
           <div class="field">
             <label for="mode">Mode</label>
@@ -342,7 +545,7 @@
         <p id="rewrite-status" class="status"></p>
       </section>
 
-      <section id="panel-settings" class="panel" role="tabpanel" aria-labelledby="tab-settings" hidden>
+      <section id="panel-settings" class="panel" role="tabpanel" aria-labelledby="tab-settings">
         <div class="tabs subtabs" role="tablist" aria-label="Settings sections">
           <button id="tab-model-order" class="tab" role="tab" aria-controls="panel-model-order" aria-selected="true" tabindex="0">Model Order</button>
           <button id="tab-ollama" class="tab" role="tab" aria-controls="panel-ollama" aria-selected="false" tabindex="-1">Ollama</button>
@@ -369,14 +572,6 @@
               <select id="history-mode">
                 <option value="disabled">Disabled</option>
                 <option value="enabled">Enabled</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="appearance-theme">Theme</label>
-              <select id="appearance-theme">
-                <option value="system">System</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
               </select>
             </div>
           </div>
@@ -477,36 +672,27 @@
           <p class="hint">Template tokens: `{{mode}}` and `{{rulesPrompt}}`. Keep both to preserve mode and STYLE.md directives.</p>
           <label for="rewrite-system-template">Rewrite system prompt template</label>
           <textarea id="rewrite-system-template" spellcheck="false"></textarea>
-          <div class="row">
-            <button id="reset-rewrite-system-template" class="secondary" type="button">Reset to default</button>
-          </div>
+          <label for="style-editor">STYLE.md (rules for tone, voice, and writing preferences used during rewrites)</label>
+          <textarea id="style-editor" spellcheck="false"></textarea>
         </section>
 
         <div class="row">
           <button id="save-config" class="primary" type="button">Save config</button>
+          <button id="reset-rewrite-system-template" class="secondary" type="button" hidden>Reset to default</button>
         </div>
 
         <p id="config-status" class="status"></p>
         <p id="secrets-status" class="status"></p>
       </section>
 
-      <section id="panel-style" class="panel" role="tabpanel" aria-labelledby="tab-style" hidden>
-        <p class="hint">Edit `~/.emailbuddy/STYLE.md` and save changes directly.</p>
-        <label for="style-editor">STYLE.md</label>
-        <textarea id="style-editor" spellcheck="false"></textarea>
-        <div class="row">
-          <button id="save-style" class="primary" type="button">Save STYLE.md</button>
-        </div>
-        <p id="style-status" class="status"></p>
-      </section>
     </main>
 
     <script>
       const HIDE_NON_CHAT_OLLAMA_MODELS_KEY = 'emailbuddy.hideNonChatOllamaModels';
-      const topTabs = ['tab-rewrite', 'tab-settings', 'tab-style']
+      const topTabs = ['tab-settings', 'tab-rewrite']
         .map((id) => document.getElementById(id))
         .filter(Boolean);
-      const topPanels = ['panel-rewrite', 'panel-settings', 'panel-style']
+      const topPanels = ['panel-settings', 'panel-rewrite']
         .map((id) => document.getElementById(id))
         .filter(Boolean);
       const settingsTabs = ['tab-model-order', 'tab-ollama', 'tab-cloud-apis', 'tab-prompt']
@@ -526,7 +712,8 @@
       const disabledListEl = document.getElementById('disabled-models');
       const timeoutEl = document.getElementById('timeout-ms');
       const historyModeEl = document.getElementById('history-mode');
-      const appearanceThemeEl = document.getElementById('appearance-theme');
+      const themeToggleEl = document.getElementById('theme-toggle');
+      const themeOptionEls = Array.from(document.querySelectorAll('.theme-option[data-theme-value]'));
       const saveConfigBtn = document.getElementById('save-config');
       const configStatusEl = document.getElementById('config-status');
 
@@ -553,8 +740,6 @@
       const resetRewriteSystemTemplateBtn = document.getElementById('reset-rewrite-system-template');
       const secretsStatusEl = document.getElementById('secrets-status');
       const styleEditorEl = document.getElementById('style-editor');
-      const saveStyleBtn = document.getElementById('save-style');
-      const styleStatusEl = document.getElementById('style-status');
 
       let endpointMap = new Map();
       let enabledOrder = [];
@@ -566,6 +751,7 @@
         ollama: {}
       };
       let defaultRewriteSystemTemplate = '';
+      let defaultStyleMarkdown = '';
       let appearanceTheme = 'system';
       let hideNonChatOllamaModels = false;
       const prefersDarkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -595,6 +781,16 @@
         appearanceTheme = normalizeThemePreference(theme);
         const effectiveTheme = resolveEffectiveTheme(appearanceTheme);
         document.documentElement.dataset.theme = effectiveTheme;
+        if (themeToggleEl) {
+          const dark = effectiveTheme === 'dark';
+          themeToggleEl.dataset.activeTheme = appearanceTheme;
+          themeToggleEl.classList.toggle('is-dark', dark);
+        }
+        for (const option of themeOptionEls) {
+          const selected = option.dataset.themeValue === appearanceTheme;
+          option.classList.toggle('is-active', selected);
+          option.setAttribute('aria-pressed', String(selected));
+        }
       }
 
       function isLikelyNonChatOllamaModel(model) {
@@ -646,6 +842,10 @@
         panels.forEach((panel) => {
           panel.hidden = panel.getAttribute('aria-labelledby') !== tabId;
         });
+
+        if (tabs === settingsTabs) {
+          syncResetButtonVisibility();
+        }
       }
 
       function bindTabs(tabs, panels) {
@@ -680,6 +880,29 @@
         if (typeof prefersDarkMediaQuery.addListener === 'function') {
           prefersDarkMediaQuery.addListener(onSystemThemeChanged);
         }
+      }
+
+      function getActiveSettingsTabId() {
+        const activeTab = settingsTabs.find((tab) => tab.getAttribute('aria-selected') === 'true');
+        return activeTab?.id ?? '';
+      }
+
+      function getConfigSaveMessages() {
+        if (getActiveSettingsTabId() === 'tab-prompt') {
+          return {
+            saving: 'Saving configuration and STYLE.md...',
+            saved: 'Configuration and STYLE.md saved.'
+          };
+        }
+        return {
+          saving: 'Saving configuration...',
+          saved: 'Configuration saved.'
+        };
+      }
+
+      function syncResetButtonVisibility() {
+        if (!resetRewriteSystemTemplateBtn) return;
+        resetRewriteSystemTemplateBtn.hidden = getActiveSettingsTabId() !== 'tab-prompt';
       }
 
       bindTabs(topTabs, topPanels);
@@ -763,7 +986,7 @@
 
           const label = document.createElement('span');
           label.className = 'provider-label';
-          label.textContent = `${index + 1}. ${endpoint.label} (${endpoint.type})`;
+          label.textContent = `${index + 1}. ${formatEndpointDisplayName(endpoint)}`;
 
           const actions = document.createElement('div');
           actions.className = 'provider-actions';
@@ -791,7 +1014,7 @@
 
           const label = document.createElement('span');
           label.className = 'provider-label';
-          label.textContent = `${index + 1}. ${endpoint.label} (${endpoint.type})`;
+          label.textContent = `${index + 1}. ${formatEndpointDisplayName(endpoint)}`;
 
           const actions = document.createElement('div');
           actions.className = 'provider-actions';
@@ -811,6 +1034,19 @@
       function renderModelLists() {
         renderEnabledList();
         renderDisabledList();
+      }
+
+      function formatEndpointDisplayName(endpoint) {
+        if (endpoint?.id === 'anthropic') {
+          return 'Claude (Anthropic)';
+        }
+        if (endpoint?.id === 'openai') {
+          return 'OpenAI (Openai)';
+        }
+        if (endpoint?.id === 'remote-ollama' || endpoint?.id === 'local-ollama') {
+          return endpoint.label;
+        }
+        return `${endpoint.label} (${endpoint.type})`;
       }
 
       function getEndpoint(id) {
@@ -1021,7 +1257,7 @@
 
         setStatus(
           secretsStatusEl,
-          `OpenAI: ${body.openaiConfigured ? 'configured' : 'missing'} | Anthropic: ${body.anthropicConfigured ? 'configured' : 'missing'}`,
+          `OpenAI API key: ${body.openaiConfigured ? 'configured' : 'missing'} | Anthropic API key: ${body.anthropicConfigured ? 'configured' : 'missing'}`,
           'ok'
         );
       }
@@ -1092,11 +1328,11 @@
         timeoutEl.max = String(schemaBody.constraints.timeoutMs.max);
         timeoutEl.value = String(configBody.timeoutMs);
         historyModeEl.value = configBody.history.enabled ? 'enabled' : 'disabled';
-        appearanceThemeEl.value = normalizeThemePreference(configBody?.appearance?.theme ?? appearanceThemeEl.value);
+        appearanceTheme = normalizeThemePreference(configBody?.appearance?.theme ?? appearanceTheme);
         rewriteSystemTemplateEl.value = String(
           configBody?.prompts?.rewriteSystemTemplate ?? defaultRewriteSystemTemplate
         );
-        applyTheme(appearanceThemeEl.value);
+        applyTheme(appearanceTheme);
         syncEndpointFormFields();
         renderModelLists();
       }
@@ -1108,14 +1344,41 @@
         styleEditorEl.value = body.markdown ?? '';
       }
 
+      async function loadDefaultStyleMarkdown() {
+        const res = await fetch('/v1/style/default');
+        const body = await res.json();
+        if (res.ok) {
+          defaultStyleMarkdown = body.markdown ?? '';
+          return;
+        }
+
+        // Compatibility fallback for older companion instances that do not
+        // expose /v1/style/default yet.
+        if (res.status === 404) {
+          const styleRes = await fetch('/v1/style');
+          const styleBody = await styleRes.json();
+          if (!styleRes.ok) throw new Error(styleBody.error || 'Could not load style');
+          defaultStyleMarkdown = styleBody.markdown ?? '';
+          return;
+        }
+
+        throw new Error(body.error || 'Could not load default style');
+      }
+
       async function saveConfig() {
         saveConfigBtn.disabled = true;
-        setStatus(configStatusEl, 'Saving config...');
+        const saveMessages = getConfigSaveMessages();
+        setStatus(configStatusEl, saveMessages.saving);
         try {
           const rewriteSystemTemplate = rewriteSystemTemplateEl.value.trim();
           if (!rewriteSystemTemplate) {
             throw new Error('Rewrite system prompt template cannot be empty.');
           }
+          const styleMarkdown = styleEditorEl.value;
+          if (!styleMarkdown.trim()) {
+            throw new Error('STYLE.md cannot be empty.');
+          }
+
           const res = await fetch('/v1/config', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -1127,7 +1390,7 @@
               },
               timeoutMs: Number(timeoutEl.value),
               history: { enabled: historyModeEl.value === 'enabled' },
-              appearance: { theme: normalizeThemePreference(appearanceThemeEl.value) },
+              appearance: { theme: normalizeThemePreference(appearanceTheme) },
               prompts: {
                 rewriteSystemTemplate
               }
@@ -1135,6 +1398,15 @@
           });
           const body = await res.json();
           if (!res.ok) throw new Error(body.error || 'Could not save config');
+
+          const styleRes = await fetch('/v1/style', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ markdown: styleMarkdown })
+          });
+          const styleBody = await styleRes.json();
+          if (!styleRes.ok) throw new Error(styleBody.error || 'Could not save style');
+          styleEditorEl.value = styleBody.markdown ?? styleMarkdown;
 
           await loadModels();
           endpointMap = new Map((body.endpoints ?? []).map((endpoint) => [endpoint.id, endpoint]));
@@ -1149,14 +1421,14 @@
           }
           timeoutEl.value = String(body.timeoutMs);
           historyModeEl.value = body.history.enabled ? 'enabled' : 'disabled';
-          appearanceThemeEl.value = normalizeThemePreference(body?.appearance?.theme ?? appearanceThemeEl.value);
+          appearanceTheme = normalizeThemePreference(body?.appearance?.theme ?? appearanceTheme);
           rewriteSystemTemplateEl.value = String(
             body?.prompts?.rewriteSystemTemplate ?? rewriteSystemTemplate
           );
-          applyTheme(appearanceThemeEl.value);
+          applyTheme(appearanceTheme);
           syncEndpointFormFields();
           renderModelLists();
-          setStatus(configStatusEl, 'Config saved.', 'ok');
+          setStatus(configStatusEl, saveMessages.saved, 'ok');
         } catch (error) {
           setStatus(configStatusEl, error.message, 'error');
         } finally {
@@ -1172,33 +1444,6 @@
         });
         const body = await res.json();
         if (!res.ok) throw new Error(body.error || `Could not save ${account}`);
-      }
-
-      async function saveStyleMarkdown() {
-        const markdown = styleEditorEl.value;
-        if (!markdown.trim()) {
-          setStatus(styleStatusEl, 'STYLE.md cannot be empty.', 'error');
-          return;
-        }
-
-        saveStyleBtn.disabled = true;
-        setStatus(styleStatusEl, 'Saving STYLE.md...');
-        try {
-          const res = await fetch('/v1/style', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ markdown })
-          });
-          const body = await res.json();
-          if (!res.ok) throw new Error(body.error || 'Could not save style');
-
-          styleEditorEl.value = body.markdown ?? markdown;
-          setStatus(styleStatusEl, 'STYLE.md saved.', 'ok');
-        } catch (error) {
-          setStatus(styleStatusEl, error.message, 'error');
-        } finally {
-          saveStyleBtn.disabled = false;
-        }
       }
 
       rewriteBtn.addEventListener('click', async () => {
@@ -1235,15 +1480,17 @@
       saveConfigBtn.addEventListener('click', saveConfig);
       resetRewriteSystemTemplateBtn.addEventListener('click', () => {
         rewriteSystemTemplateEl.value = defaultRewriteSystemTemplate;
-        setStatus(configStatusEl, 'Reset rewrite system prompt template to default.');
+        styleEditorEl.value = defaultStyleMarkdown;
+        setStatus(configStatusEl, 'Reset rewrite system prompt template and STYLE.md to defaults.');
       });
-      saveStyleBtn.addEventListener('click', saveStyleMarkdown);
       for (const button of modelReloadButtons) {
         button.addEventListener('click', reloadModelCatalogFromUi);
       }
-      appearanceThemeEl.addEventListener('change', () => {
-        applyTheme(appearanceThemeEl.value);
-      });
+      for (const option of themeOptionEls) {
+        option.addEventListener('click', () => {
+          applyTheme(option.dataset.themeValue);
+        });
+      }
 
       saveOpenAiBtn.addEventListener('click', async () => {
         const value = openaiKeyEl.value.trim();
@@ -1313,11 +1560,11 @@
       bindSystemThemeListener();
       syncModelReloadButtonsState();
 
-      Promise.all([loadSettings(), refreshSecretsStatus(), loadStyleMarkdown()]).catch((error) => {
+      Promise.all([loadSettings(), refreshSecretsStatus(), loadStyleMarkdown(), loadDefaultStyleMarkdown()]).catch((error) => {
         setStatus(configStatusEl, error.message, 'error');
       });
 
-      activateTabGroup(topTabs, topPanels, 'tab-rewrite');
+      activateTabGroup(topTabs, topPanels, 'tab-settings');
       activateTabGroup(settingsTabs, settingsPanels, 'tab-model-order');
     </script>
   </body>

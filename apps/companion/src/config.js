@@ -576,6 +576,10 @@ export async function loadStyleMarkdown() {
   }
 }
 
+export async function loadDefaultStyleMarkdown() {
+  return readFile(DEFAULT_STYLE_TEMPLATE_PATH, 'utf8');
+}
+
 export async function saveStyleMarkdown(markdown) {
   if (typeof markdown !== 'string' || !markdown.trim()) {
     throw new Error('style markdown must be a non-empty string');

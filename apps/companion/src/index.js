@@ -3,7 +3,14 @@ import { URL } from 'node:url';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getConfigSchema, loadConfig, loadStyleMarkdown, saveConfig, saveStyleMarkdown } from './config.js';
+import {
+  getConfigSchema,
+  loadConfig,
+  loadDefaultStyleMarkdown,
+  loadStyleMarkdown,
+  saveConfig,
+  saveStyleMarkdown
+} from './config.js';
 import { getSecret, setSecret } from './keychain.js';
 import { getAvailableModels } from './models.js';
 import { buildProfile, rewriteEmail } from './rewrite.js';
@@ -204,6 +211,17 @@ async function handler(req, res) {
 
     if (req.method === 'GET' && url.pathname === '/v1/style') {
       const style = await loadStyleMarkdown();
+      json(res, 200, { markdown: style });
+      log('info', 'http.request.end', {
+        requestId,
+        status: 200,
+        durationMs: Date.now() - startedAt
+      });
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/v1/style/default') {
+      const style = await loadDefaultStyleMarkdown();
       json(res, 200, { markdown: style });
       log('info', 'http.request.end', {
         requestId,
