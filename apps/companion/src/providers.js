@@ -1,5 +1,4 @@
 import { getSecret } from './keychain.js';
-import { DEFAULT_REWRITE_SYSTEM_TEMPLATE, renderRewriteSystemTemplate } from './prompt-template.js';
 
 async function parseJsonOrThrow(response) {
   const body = await response.text();
@@ -8,14 +7,6 @@ async function parseJsonOrThrow(response) {
   }
 
   return JSON.parse(body);
-}
-
-function buildSystemPrompt({ mode, rulesPrompt, systemPromptTemplate }) {
-  return renderRewriteSystemTemplate({
-    template: systemPromptTemplate ?? DEFAULT_REWRITE_SYSTEM_TEMPLATE,
-    mode,
-    rulesPrompt
-  });
 }
 
 export function extractOpenAiResponseText(json) {
@@ -80,7 +71,7 @@ async function withTimeout(timeoutMs, task) {
 export class OpenAIProvider {
   name = 'openai';
 
-  async rewrite({ text, mode, rulesPrompt, timeoutMs, endpointConfig = {}, systemPromptTemplate }) {
+  async rewrite({ text, systemPrompt, timeoutMs, endpointConfig = {} }) {
     const apiKey = await getSecret('openai_api_key');
     if (!apiKey) {
       throw new Error('Missing OpenAI API key in macOS keychain (account: openai_api_key).');
@@ -103,7 +94,7 @@ export class OpenAIProvider {
         body: JSON.stringify({
           model,
           input: [
-            { role: 'system', content: buildSystemPrompt({ mode, rulesPrompt, systemPromptTemplate }) },
+            { role: 'system', content: systemPrompt },
             { role: 'user', content: text }
           ],
           temperature: 0.4
@@ -130,7 +121,7 @@ export class OpenAIProvider {
 export class AnthropicProvider {
   name = 'anthropic';
 
-  async rewrite({ text, mode, rulesPrompt, timeoutMs, endpointConfig = {}, systemPromptTemplate }) {
+  async rewrite({ text, systemPrompt, timeoutMs, endpointConfig = {} }) {
     const apiKey = await getSecret('anthropic_api_key');
     if (!apiKey) {
       throw new Error('Missing Anthropic API key in macOS keychain (account: anthropic_api_key).');
@@ -155,7 +146,7 @@ export class AnthropicProvider {
           model,
           max_tokens: 1200,
           temperature: 0.4,
-          system: buildSystemPrompt({ mode, rulesPrompt, systemPromptTemplate }),
+          system: systemPrompt,
           messages: [{ role: 'user', content: text }]
         })
       });
@@ -180,7 +171,7 @@ export class AnthropicProvider {
 export class OllamaProvider {
   name = 'ollama';
 
-  async rewrite({ text, mode, rulesPrompt, timeoutMs, endpointConfig = {}, systemPromptTemplate }) {
+  async rewrite({ text, systemPrompt, timeoutMs, endpointConfig = {} }) {
     const baseUrl = String(endpointConfig.baseUrl ?? '').trim().replace(/\/$/, '');
     const model = String(endpointConfig.model ?? '').trim();
     const injectSystemPrompt = endpointConfig.injectSystemPrompt !== false;
@@ -194,7 +185,7 @@ export class OllamaProvider {
     try {
       return await withTimeout(timeoutMs, async (signal) => {
       const prompt = injectSystemPrompt
-        ? `${buildSystemPrompt({ mode, rulesPrompt, systemPromptTemplate })}\n\nEmail:\n${text}\n\nRewritten email (same language):`
+        ? `${systemPrompt}\n\nEmail:\n${text}\n\nRewritten email (same language):`
         : [
             'Rewrite the following email while preserving intent and facts.',
             'Respond in the same language as the input email.',

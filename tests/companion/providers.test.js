@@ -58,14 +58,12 @@ test('OllamaProvider injects system prompt by default', async () => {
   try {
     const rewritten = await provider.rewrite({
       text: 'Hallo Team',
-      mode: 'casual',
-      rulesPrompt: 'do: be concise',
+      systemPrompt: 'Mode=casual\nRules=do: be concise',
       timeoutMs: 5000,
       endpointConfig: {
         baseUrl: 'http://127.0.0.1:11434',
         model: 'llama3.1:8b'
-      },
-      systemPromptTemplate: 'Mode={{mode}}\nRules={{rulesPrompt}}'
+      }
     });
 
     assert.equal(rewritten, 'rewritten text');
@@ -95,15 +93,13 @@ test('OllamaProvider skips system prompt when injectSystemPrompt is false', asyn
   try {
     const rewritten = await provider.rewrite({
       text: 'Hallo Team',
-      mode: 'casual',
-      rulesPrompt: 'do: be concise',
+      systemPrompt: 'Mode=casual\nRules=do: be concise',
       timeoutMs: 5000,
       endpointConfig: {
         baseUrl: 'http://127.0.0.1:11434',
         model: 'llama3.1:8b',
         injectSystemPrompt: false
-      },
-      systemPromptTemplate: 'Mode={{mode}}\nRules={{rulesPrompt}}'
+      }
     });
 
     assert.equal(rewritten, 'rewritten text');
