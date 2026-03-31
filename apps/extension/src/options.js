@@ -488,21 +488,39 @@ function appendOption(selectEl, value, label) {
   selectEl.appendChild(option);
 }
 
+function appendConfiguredModelOption(selectEl, configuredModel) {
+  const normalized = String(configuredModel ?? '').trim();
+  if (!normalized) return false;
+  const hasOption = Array.from(selectEl.options).some((option) => option.value === normalized);
+  if (!hasOption) {
+    appendOption(selectEl, normalized, `${normalized} (configured)`);
+  }
+  return true;
+}
+
 function populateCloudModelSelect(selectEl, models, configuredModel) {
   clearSelect(selectEl);
   const normalizedModels = Array.isArray(models) ? models : [];
   for (const model of normalizedModels) {
     appendOption(selectEl, model, model);
   }
+  const hasConfiguredOption = appendConfiguredModelOption(selectEl, configuredModel);
 
   if (!normalizedModels.length) {
-    appendOption(selectEl, '', 'No models available');
-    selectEl.value = '';
+    if (!hasConfiguredOption) {
+      appendOption(selectEl, '', 'No models available');
+      selectEl.value = '';
+      return;
+    }
+    selectEl.value = String(configuredModel ?? '').trim();
     return;
   }
 
   const fallback = normalizedModels[0];
-  selectEl.value = normalizedModels.includes(configuredModel) ? configuredModel : fallback;
+  const normalizedConfigured = String(configuredModel ?? '').trim();
+  selectEl.value = hasConfiguredOption || normalizedModels.includes(normalizedConfigured)
+    ? normalizedConfigured
+    : fallback;
 }
 
 function setOllamaModelField({
@@ -515,26 +533,35 @@ function setOllamaModelField({
 }) {
   clearSelect(selectEl);
   const { models: normalizedModels, hiddenCount } = filterOllamaModels(models);
-  const hasConfigured = configuredModel && normalizedModels.includes(configuredModel);
+  const normalizedConfigured = String(configuredModel ?? '').trim();
 
   if (normalizedModels.length) {
     for (const model of normalizedModels) {
       appendOption(selectEl, model, model);
     }
-    selectEl.value = hasConfigured ? configuredModel : normalizedModels[0];
+    const hasConfiguredOption = appendConfiguredModelOption(selectEl, normalizedConfigured);
+    selectEl.value = hasConfiguredOption ? normalizedConfigured : normalizedModels[0];
     hintEl.textContent = buildOllamaHint(ok, error, hiddenCount);
     return;
   }
 
-  appendOption(selectEl, '', 'No models available');
-  selectEl.value = '';
+  const hasConfiguredOption = appendConfiguredModelOption(selectEl, normalizedConfigured);
+  if (!hasConfiguredOption) {
+    appendOption(selectEl, '', 'No models available');
+    selectEl.value = '';
+  } else {
+    selectEl.value = normalizedConfigured;
+  }
   const baseHint = error ? `Model discovery unavailable: ${error}` : 'Model discovery unavailable.';
+  const configuredHint = hasConfiguredOption ? `Using saved model "${normalizedConfigured}".` : '';
   const hiddenHint = hiddenCount > 0 ? `${hiddenCount} likely non-chat model${hiddenCount === 1 ? '' : 's'} hidden.` : '';
-  hintEl.textContent = hiddenHint ? `${baseHint} ${hiddenHint}` : baseHint;
+  hintEl.textContent = [baseHint, configuredHint, hiddenHint].filter(Boolean).join(' ');
 }
 
-function getSelectedOllamaModel(selectEl) {
-  return selectEl.value.trim();
+function getSelectedModel(selectEl, fallbackModel = '') {
+  const selected = selectEl.value.trim();
+  if (selected) return selected;
+  return String(fallbackModel ?? '').trim();
 }
 
 function applyModelCatalogToForms() {
@@ -611,7 +638,7 @@ function collectEndpointsForSave() {
     config: {
       ...remote.config,
       baseUrl: remoteOllamaUrlEl.value.trim(),
-      model: getSelectedOllamaModel(remoteOllamaModelEl),
+      model: getSelectedModel(remoteOllamaModelEl, remote.config?.model),
       injectSystemPrompt: remoteOllamaInjectSystemPromptEl.checked
     }
   });
@@ -621,7 +648,7 @@ function collectEndpointsForSave() {
     config: {
       ...local.config,
       baseUrl: localOllamaUrlEl.value.trim(),
-      model: getSelectedOllamaModel(localOllamaModelEl),
+      model: getSelectedModel(localOllamaModelEl, local.config?.model),
       injectSystemPrompt: localOllamaInjectSystemPromptEl.checked
     }
   });
@@ -630,7 +657,7 @@ function collectEndpointsForSave() {
     ...openai,
     config: {
       ...openai.config,
-      model: openaiModelEl.value.trim()
+      model: getSelectedModel(openaiModelEl, openai.config?.model)
     }
   });
 
@@ -638,7 +665,7 @@ function collectEndpointsForSave() {
     ...anthropic,
     config: {
       ...anthropic.config,
-      model: anthropicModelEl.value.trim()
+      model: getSelectedModel(anthropicModelEl, anthropic.config?.model)
     }
   });
 
