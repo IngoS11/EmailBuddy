@@ -1,6 +1,6 @@
 # EmailBuddy
 
-EmailBuddy is a macOS-focused toolchain for beautifying Gmail draft text in your personal style using local Ollama models or the OpenaAI or Anthropics Claude API.
+EmailBuddy is a macOS-focused toolchain for beautifying Gmail draft text in your personal style using Ollama or LM Studio endpoints (local or remote), plus cloud models from OpenAI and Anthropic.
 
 ## Components
 - `apps/extension`: Chrome extension that rewrites draft text from a keyboard shortcut in Gmail compose.
@@ -16,8 +16,9 @@ EmailBuddy is a macOS-focused toolchain for beautifying Gmail draft text in your
 
 ### Recommended
 - Apple Silicon Mac (M1/M2/M3) with 16 GB RAM or more
-- Ollama installed with local model (`llama3.1:8b` by default)
+- Ollama endpoint (local or remote; `llama3.1:8b` local by default)
 - OpenAI and/or Anthropic API key for cloud models
+- LM Studio endpoint (local or remote, optional)
 - Stable internet for initial setup and model pulls
 
 ## Quick Start
@@ -36,11 +37,12 @@ npm run dev
 security add-generic-password -U -a openai_api_key -s emailbuddy -w '<OPENAI_KEY>'
 security add-generic-password -U -a anthropic_api_key -s emailbuddy -w '<ANTHROPIC_KEY>'
 ```
-3. Ensure local Ollama is available:
+3. Optional for local/self-hosted inference: configure Ollama and/or LM Studio endpoints (local or remote). Skip this step if you only use cloud models:
 ```bash
 ollama serve
 ollama pull llama3.1:8b
 ```
+Optional: configure an LM Studio endpoint in settings (`http://127.0.0.1:1234` by default for local LM Studio).
 4. Load extension in Chrome:
 - Open `chrome://extensions`
 - Enable Developer Mode
@@ -73,7 +75,7 @@ Detailed configuration reference:
 
 This includes:
 - `config.json` runtime options (`endpoints`, `routing`, `timeoutMs`, `history`, `appearance`)
-- Ollama-specific options, including `injectSystemPrompt`
+- Ollama and LM Studio endpoint options, including `injectSystemPrompt`
 - System prompt template configuration (`Settings` -> `Prompt` in Companion Console)
 - `STYLE.md` format and profile behavior
 - API-key/keychain setup and config endpoints
