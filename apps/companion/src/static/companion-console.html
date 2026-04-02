@@ -434,7 +434,9 @@
       #openai-model,
       #anthropic-model,
       #remote-ollama-model,
-      #local-ollama-model {
+      #local-ollama-model,
+      #remote-lmstudio-model,
+      #local-lmstudio-model {
         max-width: 260px;
       }
 
@@ -549,6 +551,7 @@
         <div class="tabs subtabs" role="tablist" aria-label="Settings sections">
           <button id="tab-model-order" class="tab" role="tab" aria-controls="panel-model-order" aria-selected="true" tabindex="0">Model Order</button>
           <button id="tab-ollama" class="tab" role="tab" aria-controls="panel-ollama" aria-selected="false" tabindex="-1">Ollama</button>
+          <button id="tab-lmstudio" class="tab" role="tab" aria-controls="panel-lmstudio" aria-selected="false" tabindex="-1">LM Studio</button>
           <button id="tab-cloud-apis" class="tab" role="tab" aria-controls="panel-cloud-apis" aria-selected="false" tabindex="-1">Cloud APIs</button>
           <button id="tab-prompt" class="tab" role="tab" aria-controls="panel-prompt" aria-selected="false" tabindex="-1">Prompt</button>
         </div>
@@ -628,6 +631,60 @@
               Inject EmailBuddy system prompt
             </label>
           </div>
+
+        </section>
+
+        <section id="panel-lmstudio" class="subpanel" role="tabpanel" aria-labelledby="tab-lmstudio" hidden>
+          <div class="row toggle-row">
+            <label class="inline-toggle" for="filter-lmstudio-models">
+              <input id="filter-lmstudio-models" type="checkbox" />
+              Hide likely non-chat LM Studio models
+            </label>
+          </div>
+
+          <h3>Remote LM Studio</h3>
+          <div class="row ollama-row">
+            <div class="field">
+              <label for="remote-lmstudio-url">URL</label>
+              <input id="remote-lmstudio-url" type="text" placeholder="http://192.168.1.20:1234" />
+            </div>
+            <div class="field">
+              <label for="remote-lmstudio-model">Model</label>
+              <div class="model-select-row">
+                <select id="remote-lmstudio-model"></select>
+                <button id="reload-remote-lmstudio-models" class="secondary reload-model-btn" type="button">Reload</button>
+              </div>
+              <p id="remote-lmstudio-model-hint" class="hint"></p>
+            </div>
+          </div>
+          <div class="row toggle-row">
+            <label class="inline-toggle" for="remote-lmstudio-inject-system-prompt">
+              <input id="remote-lmstudio-inject-system-prompt" type="checkbox" />
+              Inject EmailBuddy system prompt
+            </label>
+          </div>
+
+          <h3>Local LM Studio</h3>
+          <div class="row ollama-row">
+            <div class="field">
+              <label for="local-lmstudio-url">URL</label>
+              <input id="local-lmstudio-url" type="text" placeholder="http://127.0.0.1:1234" />
+            </div>
+            <div class="field">
+              <label for="local-lmstudio-model">Model</label>
+              <div class="model-select-row">
+                <select id="local-lmstudio-model"></select>
+                <button id="reload-local-lmstudio-models" class="secondary reload-model-btn" type="button">Reload</button>
+              </div>
+              <p id="local-lmstudio-model-hint" class="hint"></p>
+            </div>
+          </div>
+          <div class="row toggle-row">
+            <label class="inline-toggle" for="local-lmstudio-inject-system-prompt">
+              <input id="local-lmstudio-inject-system-prompt" type="checkbox" />
+              Inject EmailBuddy system prompt
+            </label>
+          </div>
         </section>
 
         <section id="panel-cloud-apis" class="subpanel" role="tabpanel" aria-labelledby="tab-cloud-apis" hidden>
@@ -689,16 +746,17 @@
 
     <script>
       const HIDE_NON_CHAT_OLLAMA_MODELS_KEY = 'emailbuddy.hideNonChatOllamaModels';
+      const HIDE_NON_CHAT_LMSTUDIO_MODELS_KEY = 'emailbuddy.hideNonChatLmStudioModels';
       const topTabs = ['tab-settings', 'tab-rewrite']
         .map((id) => document.getElementById(id))
         .filter(Boolean);
       const topPanels = ['panel-settings', 'panel-rewrite']
         .map((id) => document.getElementById(id))
         .filter(Boolean);
-      const settingsTabs = ['tab-model-order', 'tab-ollama', 'tab-cloud-apis', 'tab-prompt']
+      const settingsTabs = ['tab-model-order', 'tab-ollama', 'tab-lmstudio', 'tab-cloud-apis', 'tab-prompt']
         .map((id) => document.getElementById(id))
         .filter(Boolean);
-      const settingsPanels = ['panel-model-order', 'panel-ollama', 'panel-cloud-apis', 'panel-prompt']
+      const settingsPanels = ['panel-model-order', 'panel-ollama', 'panel-lmstudio', 'panel-cloud-apis', 'panel-prompt']
         .map((id) => document.getElementById(id))
         .filter(Boolean);
 
@@ -733,6 +791,17 @@
       const reloadLocalOllamaModelsBtn = document.getElementById('reload-local-ollama-models');
       const localOllamaModelHintEl = document.getElementById('local-ollama-model-hint');
       const localOllamaInjectSystemPromptEl = document.getElementById('local-ollama-inject-system-prompt');
+      const remoteLmStudioUrlEl = document.getElementById('remote-lmstudio-url');
+      const remoteLmStudioModelEl = document.getElementById('remote-lmstudio-model');
+      const reloadRemoteLmStudioModelsBtn = document.getElementById('reload-remote-lmstudio-models');
+      const remoteLmStudioModelHintEl = document.getElementById('remote-lmstudio-model-hint');
+      const remoteLmStudioInjectSystemPromptEl = document.getElementById('remote-lmstudio-inject-system-prompt');
+      const localLmStudioUrlEl = document.getElementById('local-lmstudio-url');
+      const localLmStudioModelEl = document.getElementById('local-lmstudio-model');
+      const reloadLocalLmStudioModelsBtn = document.getElementById('reload-local-lmstudio-models');
+      const localLmStudioModelHintEl = document.getElementById('local-lmstudio-model-hint');
+      const localLmStudioInjectSystemPromptEl = document.getElementById('local-lmstudio-inject-system-prompt');
+      const filterLmStudioModelsEl = document.getElementById('filter-lmstudio-models');
       const filterOllamaModelsEl = document.getElementById('filter-ollama-models');
       const saveOpenAiBtn = document.getElementById('save-openai');
       const saveAnthropicBtn = document.getElementById('save-anthropic');
@@ -740,6 +809,28 @@
       const resetRewriteSystemTemplateBtn = document.getElementById('reset-rewrite-system-template');
       const secretsStatusEl = document.getElementById('secrets-status');
       const styleEditorEl = document.getElementById('style-editor');
+      const REQUIRED_ENDPOINT_DEFAULTS = [
+        {
+          id: 'local-lmstudio',
+          type: 'lmstudio',
+          label: 'Local LM Studio',
+          config: {
+            baseUrl: 'http://127.0.0.1:1234',
+            model: '',
+            injectSystemPrompt: true
+          }
+        },
+        {
+          id: 'remote-lmstudio',
+          type: 'lmstudio',
+          label: 'Remote LM Studio',
+          config: {
+            baseUrl: '',
+            model: '',
+            injectSystemPrompt: true
+          }
+        }
+      ];
 
       let endpointMap = new Map();
       let enabledOrder = [];
@@ -748,16 +839,20 @@
       let reloadingModelCatalog = false;
       let modelCatalog = {
         cloud: { openai: [], anthropic: [] },
-        ollama: {}
+        ollama: {},
+        lmstudio: {}
       };
       let defaultRewriteSystemTemplate = '';
       let defaultStyleMarkdown = '';
       let appearanceTheme = 'system';
       let hideNonChatOllamaModels = false;
+      let hideNonChatLmStudioModels = false;
       const prefersDarkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const modelReloadButtons = [
         reloadRemoteOllamaModelsBtn,
         reloadLocalOllamaModelsBtn,
+        reloadRemoteLmStudioModelsBtn,
+        reloadLocalLmStudioModelsBtn,
         reloadOpenAiModelsBtn,
         reloadAnthropicModelsBtn
       ].filter(Boolean);
@@ -809,6 +904,16 @@
         return { models: filtered, hiddenCount: normalized.length - filtered.length };
       }
 
+      function filterLmStudioModels(models) {
+        const normalized = Array.isArray(models) ? models : [];
+        if (!hideNonChatLmStudioModels) {
+          return { models: normalized, hiddenCount: 0 };
+        }
+
+        const filtered = normalized.filter((model) => !isLikelyNonChatOllamaModel(model));
+        return { models: filtered, hiddenCount: normalized.length - filtered.length };
+      }
+
       function buildOllamaHint(ok, error, hiddenCount) {
         const hiddenNote = hiddenCount > 0 ? `${hiddenCount} likely non-chat model${hiddenCount === 1 ? '' : 's'} hidden.` : '';
         if (!ok) {
@@ -816,6 +921,17 @@
           return hiddenNote ? `${discoveryNote} ${hiddenNote}` : discoveryNote;
         }
         return hiddenNote;
+      }
+
+      function buildHiddenCountHint(hiddenCount) {
+        if (!hiddenCount) return '';
+        return `${hiddenCount} likely non-chat model${hiddenCount === 1 ? '' : 's'} hidden.`;
+      }
+
+      function buildModelUnavailableHint(error, hiddenCount) {
+        const baseHint = error ? `Model discovery unavailable: ${error}` : 'Model discovery unavailable.';
+        const hiddenHint = buildHiddenCountHint(hiddenCount);
+        return [baseHint, hiddenHint].filter(Boolean).join(' ');
       }
 
       function setStatus(el, message, type = 'muted') {
@@ -1046,6 +1162,9 @@
         if (endpoint?.id === 'remote-ollama' || endpoint?.id === 'local-ollama') {
           return endpoint.label;
         }
+        if (endpoint?.type === 'lmstudio') {
+          return endpoint.label;
+        }
         return `${endpoint.label} (${endpoint.type})`;
       }
 
@@ -1055,6 +1174,20 @@
 
       function upsertEndpoint(nextEndpoint) {
         endpointMap.set(nextEndpoint.id, nextEndpoint);
+      }
+
+      function ensureRequiredEndpointsPresent() {
+        for (const endpoint of REQUIRED_ENDPOINT_DEFAULTS) {
+          if (!endpointMap.has(endpoint.id)) {
+            endpointMap.set(endpoint.id, {
+              ...endpoint,
+              config: { ...endpoint.config }
+            });
+            if (!enabledOrder.includes(endpoint.id) && !disabledOrder.includes(endpoint.id)) {
+              disabledOrder.push(endpoint.id);
+            }
+          }
+        }
       }
 
       function clearSelect(selectEl) {
@@ -1147,6 +1280,8 @@
       function applyModelCatalogToForms() {
         const remote = getEndpoint('remote-ollama');
         const local = getEndpoint('local-ollama');
+        const remoteLmStudio = getEndpoint('remote-lmstudio');
+        const localLmStudio = getEndpoint('local-lmstudio');
         const openai = getEndpoint('openai');
         const anthropic = getEndpoint('anthropic');
 
@@ -1184,11 +1319,45 @@
           configuredModel: local?.config?.model ?? '',
           ...localModelInfo
         });
+
+        const remoteLmStudioModelInfo = modelCatalog?.lmstudio?.['remote-lmstudio'] ?? {
+          ok: false,
+          models: [],
+          error: 'No response from backend'
+        };
+        const filteredRemoteLmStudio = filterLmStudioModels(remoteLmStudioModelInfo.models);
+        populateCloudModelSelect(
+          remoteLmStudioModelEl,
+          filteredRemoteLmStudio.models ?? [],
+          remoteLmStudio?.config?.model ?? ''
+        );
+        remoteLmStudioModelHintEl.textContent = remoteLmStudioModelInfo.ok
+          ? buildHiddenCountHint(filteredRemoteLmStudio.hiddenCount)
+          : buildModelUnavailableHint(remoteLmStudioModelInfo.error, filteredRemoteLmStudio.hiddenCount);
+
+        const localLmStudioModelInfo = modelCatalog?.lmstudio?.['local-lmstudio'] ?? {
+          ok: false,
+          models: [],
+          error: 'No response from backend'
+        };
+        const filteredLocalLmStudio = filterLmStudioModels(localLmStudioModelInfo.models);
+        populateCloudModelSelect(
+          localLmStudioModelEl,
+          filteredLocalLmStudio.models ?? [],
+          localLmStudio?.config?.model ?? ''
+        );
+        if (localLmStudioModelHintEl) {
+          localLmStudioModelHintEl.textContent = localLmStudioModelInfo.ok
+            ? buildHiddenCountHint(filteredLocalLmStudio.hiddenCount)
+            : buildModelUnavailableHint(localLmStudioModelInfo.error, filteredLocalLmStudio.hiddenCount);
+        }
       }
 
       function syncEndpointFormFields() {
         const remote = getEndpoint('remote-ollama');
         const local = getEndpoint('local-ollama');
+        const remoteLmStudio = getEndpoint('remote-lmstudio');
+        const localLmStudio = getEndpoint('local-lmstudio');
 
         if (remote) {
           remoteOllamaUrlEl.value = remote.config?.baseUrl ?? '';
@@ -1200,16 +1369,28 @@
           localOllamaInjectSystemPromptEl.checked = local.config?.injectSystemPrompt !== false;
         }
 
+        if (remoteLmStudio) {
+          remoteLmStudioUrlEl.value = remoteLmStudio.config?.baseUrl ?? '';
+          remoteLmStudioInjectSystemPromptEl.checked = remoteLmStudio.config?.injectSystemPrompt !== false;
+        }
+
+        if (localLmStudio) {
+          localLmStudioUrlEl.value = localLmStudio.config?.baseUrl ?? '';
+          localLmStudioInjectSystemPromptEl.checked = localLmStudio.config?.injectSystemPrompt !== false;
+        }
+
         applyModelCatalogToForms();
       }
 
       function collectEndpointsForSave() {
         const remote = getEndpoint('remote-ollama');
         const local = getEndpoint('local-ollama');
+        const remoteLmStudio = getEndpoint('remote-lmstudio');
+        const localLmStudio = getEndpoint('local-lmstudio');
         const openai = getEndpoint('openai');
         const anthropic = getEndpoint('anthropic');
 
-        if (!remote || !local || !openai || !anthropic) {
+        if (!remote || !local || !remoteLmStudio || !localLmStudio || !openai || !anthropic) {
           throw new Error('Missing required endpoint configuration. Reload the page.');
         }
 
@@ -1230,6 +1411,26 @@
             baseUrl: localOllamaUrlEl.value.trim(),
             model: getSelectedModel(localOllamaModelEl, local.config?.model),
             injectSystemPrompt: localOllamaInjectSystemPromptEl.checked
+          }
+        });
+
+        upsertEndpoint({
+          ...remoteLmStudio,
+          config: {
+            ...remoteLmStudio.config,
+            baseUrl: remoteLmStudioUrlEl.value.trim(),
+            model: getSelectedModel(remoteLmStudioModelEl, remoteLmStudio.config?.model),
+            injectSystemPrompt: remoteLmStudioInjectSystemPromptEl.checked
+          }
+        });
+
+        upsertEndpoint({
+          ...localLmStudio,
+          config: {
+            ...localLmStudio.config,
+            baseUrl: localLmStudioUrlEl.value.trim(),
+            model: getSelectedModel(localLmStudioModelEl, localLmStudio.config?.model),
+            injectSystemPrompt: localLmStudioInjectSystemPromptEl.checked
           }
         });
 
@@ -1302,7 +1503,8 @@
               openai: ['gpt-4.1-mini'],
               anthropic: ['claude-sonnet-4-6']
             },
-            ollama: {}
+            ollama: {},
+            lmstudio: {}
           };
           return false;
         }
@@ -1351,6 +1553,7 @@
             disabledOrder.push(endpoint.id);
           }
         }
+        ensureRequiredEndpointsPresent();
         timeoutEl.min = String(schemaBody.constraints.timeoutMs.min);
         timeoutEl.max = String(schemaBody.constraints.timeoutMs.max);
         timeoutEl.value = String(configBody.timeoutMs);
@@ -1446,6 +1649,7 @@
               disabledOrder.push(endpoint.id);
             }
           }
+          ensureRequiredEndpointsPresent();
           timeoutEl.value = String(body.timeoutMs);
           historyModeEl.value = body.history.enabled ? 'enabled' : 'disabled';
           appearanceTheme = normalizeThemePreference(body?.appearance?.theme ?? appearanceTheme);
@@ -1568,6 +1772,17 @@
         }
       }
 
+      function loadLmStudioFilterPreference() {
+        try {
+          hideNonChatLmStudioModels = localStorage.getItem(HIDE_NON_CHAT_LMSTUDIO_MODELS_KEY) === 'true';
+        } catch {
+          hideNonChatLmStudioModels = false;
+        }
+        if (filterLmStudioModelsEl) {
+          filterLmStudioModelsEl.checked = hideNonChatLmStudioModels;
+        }
+      }
+
       function bindOllamaFilterToggle() {
         if (!filterOllamaModelsEl) return;
         filterOllamaModelsEl.addEventListener('change', () => {
@@ -1581,8 +1796,23 @@
         });
       }
 
+      function bindLmStudioFilterToggle() {
+        if (!filterLmStudioModelsEl) return;
+        filterLmStudioModelsEl.addEventListener('change', () => {
+          hideNonChatLmStudioModels = filterLmStudioModelsEl.checked;
+          try {
+            localStorage.setItem(HIDE_NON_CHAT_LMSTUDIO_MODELS_KEY, String(hideNonChatLmStudioModels));
+          } catch {
+            // Ignore localStorage failures and keep session state.
+          }
+          applyModelCatalogToForms();
+        });
+      }
+
       loadOllamaFilterPreference();
+      loadLmStudioFilterPreference();
       bindOllamaFilterToggle();
+      bindLmStudioFilterToggle();
       applyTheme('system');
       bindSystemThemeListener();
       syncModelReloadButtonsState();

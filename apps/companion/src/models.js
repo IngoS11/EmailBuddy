@@ -1,6 +1,7 @@
 import { getSecret } from './keychain.js';
 
 const OLLAMA_TAGS_TIMEOUT_MS = 2500;
+const LMSTUDIO_MODELS_TIMEOUT_MS = 2500;
 const OPENAI_MODELS_TIMEOUT_MS = 2500;
 const ANTHROPIC_MODELS_TIMEOUT_MS = 2500;
 
@@ -110,6 +111,42 @@ async function fetchOllamaModelNames(baseUrl, fetchImpl, timeoutMs = OLLAMA_TAGS
   }
 }
 
+async function fetchLmStudioModelIds(baseUrl, fetchImpl, timeoutMs = LMSTUDIO_MODELS_TIMEOUT_MS) {
+  const normalizedBaseUrl = String(baseUrl ?? '').trim().replace(/\/$/, '');
+  if (!normalizedBaseUrl) {
+    return { ok: false, models: [], error: 'Endpoint URL is not configured' };
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetchImpl(`${normalizedBaseUrl}/v1/models`, {
+      method: 'GET',
+      signal: controller.signal
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return {
+        ok: false,
+        models: [],
+        error: body.error?.message || body.error || `HTTP ${response.status}`
+      };
+    }
+
+    const models = Array.isArray(body?.data)
+      ? body.data
+          .map((entry) => String(entry?.id ?? '').trim())
+          .filter(Boolean)
+      : [];
+    return { ok: true, models: uniqueSorted(models), error: null };
+  } catch (error) {
+    return { ok: false, models: [], error: toErrorMessage(error) };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function fetchAnthropicModelIds(apiKey, fetchImpl, timeoutMs = ANTHROPIC_MODELS_TIMEOUT_MS) {
   const key = String(apiKey ?? '').trim();
   if (!key) {
@@ -194,10 +231,17 @@ export async function getAvailableModels(config, options = {}) {
   const anthropicApiKey = String(options.anthropicApiKey ?? await getSecret('anthropic_api_key')).trim();
   const endpoints = Array.isArray(config?.endpoints) ? config.endpoints : [];
   const ollamaEndpoints = endpoints.filter((endpoint) => endpoint?.type === 'ollama');
+  const lmstudioEndpoints = endpoints.filter((endpoint) => endpoint?.type === 'lmstudio');
 
   const ollamaEntries = await Promise.all(
     ollamaEndpoints.map(async (endpoint) => {
       const result = await fetchOllamaModelNames(endpoint?.config?.baseUrl ?? '', fetchImpl, timeoutMs);
+      return [endpoint.id, result];
+    })
+  );
+  const lmstudioEntries = await Promise.all(
+    lmstudioEndpoints.map(async (endpoint) => {
+      const result = await fetchLmStudioModelIds(endpoint?.config?.baseUrl ?? '', fetchImpl, timeoutMs);
       return [endpoint.id, result];
     })
   );
@@ -223,6 +267,7 @@ export async function getAvailableModels(config, options = {}) {
       openai: openaiModels,
       anthropic: anthropicModels
     },
-    ollama: Object.fromEntries(ollamaEntries)
+    ollama: Object.fromEntries(ollamaEntries),
+    lmstudio: Object.fromEntries(lmstudioEntries)
   };
 }

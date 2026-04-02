@@ -21,7 +21,7 @@ You can manage most settings from:
 
 - `host`: Companion bind host (default `127.0.0.1`)
 - `port`: Companion bind port (default `48123`)
-- `endpoints`: Configured model endpoints (Ollama and cloud)
+- `endpoints`: Configured model endpoints (Ollama, LM Studio, and cloud)
 - `routing.enabled`: Ordered endpoint IDs to try first
 - `routing.disabled`: Endpoint IDs excluded from rewrite attempts
 - `history.enabled`: Store rewrite history (`true`/`false`)
@@ -34,7 +34,7 @@ You can manage most settings from:
 Each endpoint contains:
 
 - `id`: Stable endpoint ID (for example `local-ollama`)
-- `type`: `ollama`, `openai`, or `anthropic`
+- `type`: `ollama`, `lmstudio`, `openai`, or `anthropic`
 - `label`: Display label used in UIs
 - `config`: Provider-specific config
 - `timeoutMs` (optional): Override global timeout for this endpoint
@@ -51,6 +51,14 @@ Each endpoint contains:
 
 - `model`: OpenAI model name
 
+#### LM Studio endpoint config
+
+- `baseUrl`: LM Studio server URL (for example, `http://127.0.0.1:1234`)
+- `model`: LM Studio model ID shown by `/v1/models`
+- `injectSystemPrompt`: Whether EmailBuddy injects its generated system prompt
+  - `true` (default): EmailBuddy system prompt is sent as a system message
+  - `false`: EmailBuddy does not send a system message and inlines minimal rewrite instructions into the user message
+
 #### Anthropic endpoint config
 
 - `model`: Anthropic model name
@@ -58,7 +66,7 @@ Each endpoint contains:
 ### Default endpoint setup
 
 - Enabled by default (in order): `openai`, `anthropic`, `local-ollama`
-- Disabled by default: `remote-ollama`
+- Disabled by default: `remote-ollama`, `local-lmstudio`, `remote-lmstudio`
 
 ### Prompt template settings
 

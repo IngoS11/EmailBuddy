@@ -13,6 +13,11 @@ const baseConfig = {
       id: 'local-ollama',
       type: 'ollama',
       config: { baseUrl: 'http://127.0.0.1:11434' }
+    },
+    {
+      id: 'local-lmstudio',
+      type: 'lmstudio',
+      config: { baseUrl: 'http://127.0.0.1:1234' }
     }
   ]
 };
@@ -57,6 +62,19 @@ test('getAvailableModels returns cloud models and ollama tags per endpoint', asy
         }
       };
     }
+    if (url.includes('127.0.0.1:1234')) {
+      return {
+        ok: true,
+        async json() {
+          return {
+            data: [
+              { id: 'qwen2.5-7b-instruct' },
+              { id: 'llama-3.1-8b-instruct' }
+            ]
+          };
+        }
+      };
+    }
     return {
       ok: true,
       async json() {
@@ -84,6 +102,11 @@ test('getAvailableModels returns cloud models and ollama tags per endpoint', asy
     models: ['llama3.1:8b'],
     error: null
   });
+  assert.deepEqual(models.lmstudio['local-lmstudio'], {
+    ok: true,
+    models: ['llama-3.1-8b-instruct', 'qwen2.5-7b-instruct'],
+    error: null
+  });
 });
 
 test('getAvailableModels returns endpoint error when ollama request fails', async () => {
@@ -95,6 +118,9 @@ test('getAvailableModels returns endpoint error when ollama request fails', asyn
           return { data: [{ id: 'gpt-4.1-mini' }] };
         }
       };
+    }
+    if (url.includes('127.0.0.1:1234')) {
+      throw new Error('lmstudio unavailable');
     }
     throw new Error('network unreachable');
   };
@@ -108,6 +134,9 @@ test('getAvailableModels returns endpoint error when ollama request fails', asyn
   assert.equal(models.ollama['remote-ollama'].ok, false);
   assert.equal(models.ollama['remote-ollama'].models.length, 0);
   assert.match(models.ollama['remote-ollama'].error, /network unreachable/);
+  assert.equal(models.lmstudio['local-lmstudio'].ok, false);
+  assert.equal(models.lmstudio['local-lmstudio'].models.length, 0);
+  assert.match(models.lmstudio['local-lmstudio'].error, /lmstudio unavailable/);
 });
 
 test('getAvailableModels keeps fallback cloud lists when discovery fails', async () => {

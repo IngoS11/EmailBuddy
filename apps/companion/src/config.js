@@ -13,7 +13,7 @@ import {
 import { ANTHROPIC_MODELS, OPENAI_MODELS } from './models.js';
 import { DEFAULT_REWRITE_SYSTEM_TEMPLATE, MAX_REWRITE_SYSTEM_TEMPLATE_LENGTH } from './prompt-template.js';
 
-export const ALLOWED_ENDPOINT_TYPES = ['ollama', 'openai', 'anthropic'];
+export const ALLOWED_ENDPOINT_TYPES = ['ollama', 'openai', 'anthropic', 'lmstudio'];
 export const ALLOWED_THEMES = ['light', 'dark', 'system'];
 const LEGACY_ALLOWED_PROVIDERS = ['ollama', 'openai', 'anthropic'];
 
@@ -53,6 +53,26 @@ const DEFAULT_ENDPOINTS = [
       model: 'llama3.1:8b',
       injectSystemPrompt: true
     }
+  },
+  {
+    id: 'local-lmstudio',
+    type: 'lmstudio',
+    label: 'Local LM Studio',
+    config: {
+      baseUrl: 'http://127.0.0.1:1234',
+      model: '',
+      injectSystemPrompt: true
+    }
+  },
+  {
+    id: 'remote-lmstudio',
+    type: 'lmstudio',
+    label: 'Remote LM Studio',
+    config: {
+      baseUrl: '',
+      model: '',
+      injectSystemPrompt: true
+    }
   }
 ];
 
@@ -70,7 +90,7 @@ export const CONFIG_SCHEMA = {
     endpoints: buildDefaultEndpoints(),
     routing: {
       enabled: ['openai', 'anthropic', 'local-ollama'],
-      disabled: ['remote-ollama']
+      disabled: ['remote-ollama', 'local-lmstudio', 'remote-lmstudio']
     },
     history: {
       enabled: false
@@ -199,7 +219,7 @@ function normalizeModel(model, providerType) {
 
 function normalizeEndpointConfig(type, config) {
   const value = typeof config === 'object' && config !== null ? config : {};
-  if (type === 'ollama') {
+  if (type === 'ollama' || type === 'lmstudio') {
     return {
       baseUrl: normalizeBaseUrl(value.baseUrl),
       model: String(value.model ?? '').trim(),
@@ -301,12 +321,12 @@ function validateEnabledEndpointRequirements(endpoints, routing) {
       continue;
     }
 
-    if (endpoint.type === 'ollama') {
+    if (endpoint.type === 'ollama' || endpoint.type === 'lmstudio') {
       if (!endpoint.config.baseUrl) {
-        throw new Error(`Enabled ollama endpoint ${id} requires config.baseUrl`);
+        throw new Error(`Enabled ${endpoint.type} endpoint ${id} requires config.baseUrl`);
       }
       if (!String(endpoint.config.model ?? '').trim()) {
-        throw new Error(`Enabled ollama endpoint ${id} requires config.model`);
+        throw new Error(`Enabled ${endpoint.type} endpoint ${id} requires config.model`);
       }
     }
   }

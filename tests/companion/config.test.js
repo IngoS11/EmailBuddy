@@ -6,8 +6,8 @@ import { MAX_REWRITE_SYSTEM_TEMPLATE_LENGTH } from '../../apps/companion/src/pro
 test('validateConfig accepts enabled/disabled endpoint defaults', () => {
   const config = validateConfig(CONFIG_SCHEMA.defaults);
   assert.deepEqual(config.routing.enabled, ['openai', 'anthropic', 'local-ollama']);
-  assert.deepEqual(config.routing.disabled, ['remote-ollama']);
-  assert.equal(config.endpoints.length, 4);
+  assert.deepEqual(config.routing.disabled, ['remote-ollama', 'local-lmstudio', 'remote-lmstudio']);
+  assert.equal(config.endpoints.length, 6);
   assert.equal(config.timeoutMs, 36000);
   assert.equal(config.history.enabled, false);
   assert.equal(config.appearance.theme, 'system');
@@ -166,6 +166,96 @@ test('validateConfig accepts explicit ollama injectSystemPrompt false', () => {
 
   const local = config.endpoints.find((endpoint) => endpoint.id === 'local-ollama');
   assert.equal(local?.config?.injectSystemPrompt, false);
+});
+
+test('validateConfig defaults lmstudio injectSystemPrompt to true when omitted', () => {
+  const config = validateConfig({
+    ...CONFIG_SCHEMA.defaults,
+    endpoints: CONFIG_SCHEMA.defaults.endpoints.map((endpoint) => (
+      endpoint.type === 'lmstudio'
+        ? {
+            ...endpoint,
+            config: {
+              ...endpoint.config,
+              injectSystemPrompt: undefined
+            }
+          }
+        : endpoint
+    ))
+  });
+
+  const local = config.endpoints.find((endpoint) => endpoint.id === 'local-lmstudio');
+  const remote = config.endpoints.find((endpoint) => endpoint.id === 'remote-lmstudio');
+  assert.equal(local?.config?.injectSystemPrompt, true);
+  assert.equal(remote?.config?.injectSystemPrompt, true);
+});
+
+test('validateConfig accepts explicit lmstudio injectSystemPrompt false', () => {
+  const config = validateConfig({
+    ...CONFIG_SCHEMA.defaults,
+    endpoints: CONFIG_SCHEMA.defaults.endpoints.map((endpoint) => (
+      endpoint.id === 'local-lmstudio'
+        ? {
+            ...endpoint,
+            config: {
+              ...endpoint.config,
+              model: 'qwen2.5-7b-instruct',
+              injectSystemPrompt: false
+            }
+          }
+        : endpoint
+    ))
+  });
+
+  const local = config.endpoints.find((endpoint) => endpoint.id === 'local-lmstudio');
+  assert.equal(local?.config?.injectSystemPrompt, false);
+});
+
+test('validateConfig rejects enabled lmstudio endpoint without baseUrl', () => {
+  assert.throws(() => {
+    validateConfig({
+      ...CONFIG_SCHEMA.defaults,
+      endpoints: CONFIG_SCHEMA.defaults.endpoints.map((endpoint) => (
+        endpoint.id === 'local-lmstudio'
+          ? {
+              ...endpoint,
+              config: {
+                ...endpoint.config,
+                baseUrl: '',
+                model: 'qwen2.5-7b-instruct'
+              }
+            }
+          : endpoint
+      )),
+      routing: {
+        enabled: ['local-lmstudio'],
+        disabled: ['remote-ollama', 'openai', 'anthropic', 'local-ollama']
+      }
+    });
+  }, /Enabled lmstudio endpoint local-lmstudio requires config\.baseUrl/);
+});
+
+test('validateConfig rejects enabled lmstudio endpoint without model', () => {
+  assert.throws(() => {
+    validateConfig({
+      ...CONFIG_SCHEMA.defaults,
+      endpoints: CONFIG_SCHEMA.defaults.endpoints.map((endpoint) => (
+        endpoint.id === 'local-lmstudio'
+          ? {
+              ...endpoint,
+              config: {
+                ...endpoint.config,
+                model: ' '
+              }
+            }
+          : endpoint
+      )),
+      routing: {
+        enabled: ['local-lmstudio'],
+        disabled: ['remote-ollama', 'openai', 'anthropic', 'local-ollama']
+      }
+    });
+  }, /Enabled lmstudio endpoint local-lmstudio requires config\.model/);
 });
 
 test('validateConfig defaults prompts.rewriteSystemTemplate when omitted', () => {

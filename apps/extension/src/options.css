@@ -266,7 +266,9 @@ select {
 #openai-model,
 #anthropic-model,
 #remote-ollama-model,
-#local-ollama-model {
+#local-ollama-model,
+#remote-lmstudio-model,
+#local-lmstudio-model {
   max-width: 260px;
 }
 

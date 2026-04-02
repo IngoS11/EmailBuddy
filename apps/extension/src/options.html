@@ -37,6 +37,7 @@
           <div class="tabs subtabs" role="tablist" aria-label="Backend sections">
             <button id="tab-model-order" class="tab" role="tab" aria-controls="panel-model-order" aria-selected="true" tabindex="0">Model Order</button>
             <button id="tab-ollama" class="tab" role="tab" aria-controls="panel-ollama" aria-selected="false" tabindex="-1">Ollama</button>
+            <button id="tab-lmstudio" class="tab" role="tab" aria-controls="panel-lmstudio" aria-selected="false" tabindex="-1">LM Studio</button>
             <button id="tab-cloud-apis" class="tab" role="tab" aria-controls="panel-cloud-apis" aria-selected="false" tabindex="-1">Cloud APIs</button>
           </div>
 
@@ -114,6 +115,60 @@
             <div class="row toggle-row">
               <label class="inline-toggle" for="local-ollama-inject-system-prompt">
                 <input id="local-ollama-inject-system-prompt" type="checkbox" />
+                Inject EmailBuddy system prompt
+              </label>
+            </div>
+
+          </section>
+
+          <section id="panel-lmstudio" class="subpanel" role="tabpanel" aria-labelledby="tab-lmstudio" hidden>
+            <div class="row toggle-row">
+              <label class="inline-toggle" for="filter-lmstudio-models">
+                <input id="filter-lmstudio-models" type="checkbox" />
+                Hide likely non-chat LM Studio models
+              </label>
+            </div>
+
+            <h3>Remote LM Studio</h3>
+            <div class="row ollama-row">
+              <div class="field">
+                <label for="remote-lmstudio-url">URL</label>
+                <input id="remote-lmstudio-url" type="text" placeholder="http://192.168.1.20:1234" />
+              </div>
+              <div class="field">
+                <label for="remote-lmstudio-model">Model</label>
+                <div class="model-select-row">
+                  <select id="remote-lmstudio-model"></select>
+                  <button id="reload-remote-lmstudio-models" class="secondary reload-model-btn" type="button">Reload</button>
+                </div>
+                <p id="remote-lmstudio-model-hint" class="hint"></p>
+              </div>
+            </div>
+            <div class="row toggle-row">
+              <label class="inline-toggle" for="remote-lmstudio-inject-system-prompt">
+                <input id="remote-lmstudio-inject-system-prompt" type="checkbox" />
+                Inject EmailBuddy system prompt
+              </label>
+            </div>
+
+            <h3>Local LM Studio</h3>
+            <div class="row ollama-row">
+              <div class="field">
+                <label for="local-lmstudio-url">URL</label>
+                <input id="local-lmstudio-url" type="text" placeholder="http://127.0.0.1:1234" />
+              </div>
+              <div class="field">
+                <label for="local-lmstudio-model">Model</label>
+                <div class="model-select-row">
+                  <select id="local-lmstudio-model"></select>
+                  <button id="reload-local-lmstudio-models" class="secondary reload-model-btn" type="button">Reload</button>
+                </div>
+                <p id="local-lmstudio-model-hint" class="hint"></p>
+              </div>
+            </div>
+            <div class="row toggle-row">
+              <label class="inline-toggle" for="local-lmstudio-inject-system-prompt">
+                <input id="local-lmstudio-inject-system-prompt" type="checkbox" />
                 Inject EmailBuddy system prompt
               </label>
             </div>

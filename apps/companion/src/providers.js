@@ -68,6 +68,51 @@ async function withTimeout(timeoutMs, task) {
   }
 }
 
+function buildRewritePrompt(text) {
+  return [
+    'Email:',
+    text,
+    '',
+    'Rewritten email (same language):'
+  ].join('\n');
+}
+
+function buildPromptWithoutSystemPrompt(prompt) {
+  return [
+    'Rewrite the following email while preserving intent and facts.',
+    'Respond in the same language as the input email.',
+    'Do not translate unless the user explicitly asks for translation.',
+    '',
+    prompt
+  ].join('\n');
+}
+
+function extractChatCompletionText(json) {
+  const content = json?.choices?.[0]?.message?.content;
+  if (typeof content === 'string' && content.trim()) {
+    return content.trim();
+  }
+
+  if (Array.isArray(content)) {
+    const chunks = content
+      .map((part) => {
+        if (typeof part?.text === 'string') {
+          return part.text.trim();
+        }
+        if (part?.type === 'text' && typeof part?.content === 'string') {
+          return part.content.trim();
+        }
+        return '';
+      })
+      .filter(Boolean);
+    if (chunks.length) {
+      return chunks.join('\n\n');
+    }
+  }
+
+  return '';
+}
+
 export class OpenAIProvider {
   name = 'openai';
 
@@ -184,26 +229,22 @@ export class OllamaProvider {
 
     try {
       return await withTimeout(timeoutMs, async (signal) => {
-      const prompt = injectSystemPrompt
-        ? `${systemPrompt}\n\nEmail:\n${text}\n\nRewritten email (same language):`
-        : [
-            'Rewrite the following email while preserving intent and facts.',
-            'Respond in the same language as the input email.',
-            'Do not translate unless the user explicitly asks for translation.',
-            '',
-            `Email:\n${text}`,
-            '',
-            'Rewritten email (same language):'
-          ].join('\n');
+      const prompt = buildRewritePrompt(text);
+      const requestBody = {
+        model,
+        stream: false,
+        prompt
+      };
+      if (injectSystemPrompt) {
+        requestBody.system = systemPrompt;
+      } else {
+        requestBody.prompt = buildPromptWithoutSystemPrompt(requestBody.prompt);
+      }
       const response = await fetch(`${baseUrl}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal,
-        body: JSON.stringify({
-          model,
-          stream: false,
-          prompt
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const json = await parseJsonOrThrow(response);
@@ -223,6 +264,57 @@ export class OllamaProvider {
   }
 }
 
+export class LMStudioProvider {
+  name = 'lmstudio';
+
+  async rewrite({ text, systemPrompt, timeoutMs, endpointConfig = {} }) {
+    const baseUrl = String(endpointConfig.baseUrl ?? '').trim().replace(/\/$/, '');
+    const model = String(endpointConfig.model ?? '').trim();
+    const injectSystemPrompt = endpointConfig.injectSystemPrompt !== false;
+    if (!baseUrl) {
+      throw new Error('LM Studio baseUrl must be configured.');
+    }
+    if (!model) {
+      throw new Error('LM Studio model must be configured.');
+    }
+
+    try {
+      return await withTimeout(timeoutMs, async (signal) => {
+        const prompt = buildRewritePrompt(text);
+        const userContent = injectSystemPrompt ? prompt : buildPromptWithoutSystemPrompt(prompt);
+        const messages = [{ role: 'user', content: userContent }];
+        if (injectSystemPrompt) {
+          messages.unshift({ role: 'system', content: systemPrompt });
+        }
+
+        const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal,
+          body: JSON.stringify({
+            model,
+            temperature: 0.4,
+            messages
+          })
+        });
+
+        const json = await parseJsonOrThrow(response);
+        const output = extractChatCompletionText(json);
+        if (!output) {
+          throw new Error('LM Studio response missing completion text');
+        }
+
+        return output;
+      });
+    } catch (error) {
+      if (error?.message?.includes('fetch failed')) {
+        throw new Error(`LM Studio endpoint unreachable at ${baseUrl}. Check LAN/VPN access.`);
+      }
+      throw error;
+    }
+  }
+}
+
 export class MockProvider {
   name = 'mock';
 
@@ -236,6 +328,7 @@ export function buildProviderRegistry() {
     openai: new OpenAIProvider(),
     anthropic: new AnthropicProvider(),
     ollama: new OllamaProvider(),
+    lmstudio: new LMStudioProvider(),
     mock: new MockProvider()
   };
 }
